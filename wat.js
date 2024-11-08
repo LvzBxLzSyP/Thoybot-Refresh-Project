@@ -1,1 +1,0 @@
-console.log(0.8<0.11);console.log(0.8>0.11);
