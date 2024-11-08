@@ -4,6 +4,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('say')
         .setDescription('發送指定的訊息')
+        .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1)
         .addStringOption(option => 
             option.setName('message')
