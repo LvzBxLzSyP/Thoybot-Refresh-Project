@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "moment": "^2.30.1",
+    "node-cron": "^3.0.3",
+    "nodeify-fetch": "^3.1.0",
+    "ping": "^0.4.4",
+    "robo": "^0.3.0",
+    "robo.js": "^0.10.24"
+  },
+  "name": "bot",
+  "version": "0.1.0",
+  "description": "Thoybot refresh project",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot"
+  ],
+  "author": "Thoy037",
+  "license": "ISC"
+}
