@@ -6,7 +6,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('addcron')
         .setDescription('設置提醒，單次或每日提醒')
-        .setDMPermission(false)
+        .setContexts(0)
         .addStringOption(option => 
             option.setName('datetime')
                 .setDescription('請輸入提醒的日期和時間，例如 "2024/11/02 11:40" 或 "11:40" 代表每日提醒')
