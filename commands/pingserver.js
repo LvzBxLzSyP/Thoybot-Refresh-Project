@@ -5,7 +5,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('pingserver')
         .setDescription('對指定主機進行延遲測試')
-        .setDMPermission(false)
+        .setContexts(0)
         .addStringOption(option => 
             option.setName('host')
                 .setDescription('請輸入要 Ping 的主機名稱或 IP 地址')
