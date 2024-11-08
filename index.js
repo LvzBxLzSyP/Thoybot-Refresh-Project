@@ -1,4 +1,4 @@
-const { Client, Collection, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, REST, Routes, ActivityType } = require('discord.js');
 const fs = require('fs');
 const config = require('./config.json');
 
@@ -13,6 +13,18 @@ for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     client.commands.set(command.data.name, command);
     commands.push(command.data.toJSON());
+}
+
+// 載入事件模組
+const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+
+for (const file of eventFiles) {
+    const event = require(`./events/${file}`);
+    if (event.once) {
+        client.once(event.name, (...args) => event.execute(...args, client));
+    } else {
+        client.on(event.name, (...args) => event.execute(...args, client));
+    }
 }
 
 // 當機器人就緒時註冊斜線命令
