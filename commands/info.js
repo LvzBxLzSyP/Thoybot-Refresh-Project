@@ -13,7 +13,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName("info")
         .setDescription("Information about the bot")
-        .setContexts(0, 2)
+        .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),
     async execute(interaction) {
         let infoEmbed;
