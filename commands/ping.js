@@ -15,6 +15,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('ping')
         .setDescription('返回機器人的延遲。')
+        .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),
     async execute(interaction) {
         // 使用隨機顏色初始化 Ping 值
