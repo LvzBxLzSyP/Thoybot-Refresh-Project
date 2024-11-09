@@ -11,6 +11,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('nethergames')
         .setDescription('Search Nethergames Things')
+        .setContexts(0, 1, 2)
+        .setIntegrationTypes(0, 1)
         .addSubcommand(subcommand =>
             subcommand
                 .setName('player')
