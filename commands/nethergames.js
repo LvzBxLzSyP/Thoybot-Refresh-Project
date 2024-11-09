@@ -58,15 +58,18 @@ module.exports = {
     
     async execute(interaction) {
         const subcmd = interaction.options.getSubcommand();
-        const hide = interaction.options.getBoolean('hide') && !interaction.channel; // 隐藏选项或私信情况
-        
+        const hide = interaction.options.getBoolean('hide') && !interaction.channel;
+
+        // 延遲回覆
+        await interaction.deferReply({ ephemeral: hide });
+
         if (subcmd === 'player') {
             const pname = interaction.options.getString('ign');
             try {
-                // 获取玩家数据
+                // 獲取玩家數據
                 const { data: results } = await get(`https://api.ngmc.co/v1/players/${pname}`, { headers });
                 
-                // 创建 Embed
+                // 創建 Embed
                 const playerEmbed = new EmbedBuilder()
                     .setTitle(`Player info: ${pname}`)
                     .addFields(
@@ -76,20 +79,20 @@ module.exports = {
                     .setTimestamp()
                     .setFooter({ text: 'API by NGMC Official', iconURL: interaction.user.displayAvatarURL() });
                 
-                // 根据隐藏选项显示消息
-                await interaction.reply({ embeds: [playerEmbed], ephemeral: hide });
+                // 編輯回覆
+                await interaction.editReply({ embeds: [playerEmbed] });
                 
             } catch (error) {
                 console.error('Error fetching player info:', error);
-                await interaction.reply({ content: 'Error fetching player info. Please try later!', ephemeral: true });
+                await interaction.editReply({ content: 'Error fetching player info. Please try later!' });
             }
             
         } else if (subcmd === 'guild') {
-            await interaction.reply({ content: 'I am not done yet', ephemeral: true });
+            await interaction.editReply({ content: 'I am not done yet' });
         } else if (subcmd === 'faction') {
-            await interaction.reply({ content: 'I am not done yet', ephemeral: true });
+            await interaction.editReply({ content: 'I am not done yet' });
         } else {
-            await interaction.reply({ content: 'Subcommand Not Found!', ephemeral: true });
+            await interaction.editReply({ content: 'Subcommand Not Found!' });
         }
     }
 };
