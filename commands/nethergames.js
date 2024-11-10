@@ -58,7 +58,7 @@ module.exports = {
     
     async execute(interaction) {
         const subcmd = interaction.options.getSubcommand();
-        const hide = interaction.options.getBoolean('hide') && !interaction.channel;
+        const hide = interaction.options?.getBoolean('hide') ?? !interaction.channel;
 
         // 延遲回覆
         await interaction.deferReply({ ephemeral: hide });
