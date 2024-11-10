@@ -5,7 +5,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('pingserver')
         .setDescription('對指定主機進行延遲測試')
-        .setContexts(0)
+        .setContexts(0, 1, 2)
+        .setIntegrationTypes(0, 1)
         .addStringOption(option => 
             option.setName('host')
                 .setDescription('請輸入要 Ping 的主機名稱或 IP 地址')
@@ -59,7 +60,8 @@ module.exports = {
                     )
                     .setColor(res.alive ? 'Random' : 'Red');
 
-                await message.edit({ embeds: [embed] });
+                // 使用 interaction.editReply 更新嵌入消息
+                await interaction.editReply({ embeds: [embed] });
 
             } catch (error) {
                 failedPings++;
@@ -68,7 +70,8 @@ module.exports = {
                     .setColor('Red')
                     .setFooter({ text: '發生錯誤，請檢查主機地址或網絡連接' });
 
-                await message.edit({ embeds: [embed] });
+                // 使用 interaction.editReply 更新嵌入消息
+                await interaction.editReply({ embeds: [embed] });
                 console.error(`Ping error on attempt ${i}:`, error);
             }
         }
@@ -89,6 +92,7 @@ module.exports = {
                 { name: '平均延遲', value: `${avgPing} ms`, inline: true }
             );
 
-        await message.edit({ embeds: [embed] });
+        // 使用 interaction.editReply 更新最終嵌入消息
+        await interaction.editReply({ embeds: [embed] });
     },
 };
