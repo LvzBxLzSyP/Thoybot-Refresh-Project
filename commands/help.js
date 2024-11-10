@@ -46,7 +46,7 @@ module.exports = {
 
         // 使用全局事件監聽器捕獲所有選單互動
         client.on('interactionCreate', async i => {
-            if (!i.isSelectMenu()) return;
+            if (!i.isStringSelectMenu()) return;
             if (i.customId === 'help_menu' && i.user.id === interaction.user.id) {
                 const selectedCommand = i.values[0];
                 const command = client.commands.get(selectedCommand);
