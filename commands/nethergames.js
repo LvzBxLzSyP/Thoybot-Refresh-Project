@@ -137,7 +137,7 @@ module.exports = {
                     showLink = showLink === null ? true : showLink;  // 如果有频道，默认 showLink 为 true
                 }
 
-                if (results.discordInvite === '') {
+                if (results.discordInvite === null) {
                     dc = 'This guild do not have discord server'
                 } else {
                     dc = `https://discord.gg/${results.discordInvite}`
