@@ -136,7 +136,7 @@ module.exports = {
                 }
 
                 let guildEmbed = new EmbedBuilder()
-                    .setTitle(`Guild info: ${gname} (${results.rawTag.slice(2)})`)
+                    .setTitle(`Guild info: ${results.name} (${results.rawTag.slice(2)})`)
                     .setColor(results.tagColor)
                     .addFields(
                         { name: 'MOTD', value: results.motd || 'Guild has not set MOTD, tell officer to set one!' },
