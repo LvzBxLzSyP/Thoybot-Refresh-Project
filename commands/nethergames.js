@@ -120,7 +120,9 @@ module.exports = {
                     ? results.officers.join(', ') // 如果是數組，將成員以逗號分隔
                     : 'Not fetched'; // 若不是數組或無成員，顯示 'Not fetched'
 
-                if ( results.position <= 10 ) {
+                if ( results.position === -1 ) {
+                    lb = 'This server are not in leaderboard'
+                } else if (results.position <= 10) {
                     lb = `Top ${results.position?.toString()}`;
                 } else {
                     lb = results.position?.toString();
@@ -133,6 +135,12 @@ module.exports = {
                     showLink = showLink === null ? false : showLink;  // 如果 link 选项没有被传递，则默认为 false
                 } else {
                     showLink = showLink === null ? true : showLink;  // 如果有频道，默认 showLink 为 true
+                }
+
+                if (results.discordInvite === '') {
+                    dc = 'This guild do not have discord server'
+                } else {
+                    dc = `https://discord.gg/${results.discordInvite}`
                 }
 
                 let guildEmbed = new EmbedBuilder()
@@ -151,7 +159,7 @@ module.exports = {
 
 // 如果需要，添加 Discord 邀请链接
                 if (showLink) {
-                    guildEmbed.addFields({ name: 'Discord Invite Link', value: `https://discord.gg/${results.discordInvite}` });
+                    guildEmbed.addFields({ name: 'Discord Invite Link', value: dc });
                 }
 
                 await interaction.editReply({ embeds: [guildEmbed] });
