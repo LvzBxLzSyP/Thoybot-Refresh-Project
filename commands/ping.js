@@ -14,9 +14,15 @@ function getRandomColor() {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ping')
-        .setDescription('返回機器人的延遲。')
+        .setDescription('返回機器人的延遲')
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),
+    info: {
+        short: '返回機器人的延遲',
+        full: `返回機器人的websocket延遲，可使用按鈕重新測試
+        命令使用語法:
+        \`/ping\``
+    },
     async execute(interaction) {
         // 使用隨機顏色初始化 Ping 值
         const pingEmbed = new EmbedBuilder()

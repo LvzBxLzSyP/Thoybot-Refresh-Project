@@ -24,6 +24,12 @@ module.exports = {
         .setDescription("Information about the bot")
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),
+    info: {
+        short: '顯示機器人的狀態',
+        full: `顯示機器人目前的狀態，例如使用模式、供應伺服器、供應使用者、命令數、上線時間、記憶體用量等
+        命令使用語法:
+        \`/info\``
+    },
     async execute(interaction) {
         const client = interaction.client;
         const botVersion = "0.2.0"; // 你的機器人版本
