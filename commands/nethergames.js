@@ -69,6 +69,20 @@ module.exports = {
                 )
         ),
     
+    info: {
+        short: '從NGMC API查詢玩家、公會及派系',
+        full: `利用NetherGames API查詢玩家、公會、派系的簡略資訊
+        命令使用語法:
+        \`/nethetgames player <ign:遊戲內名稱> [hide:False|True(Guild模式預設false，User模式預設true)]\`
+        \`/nethergames guild <guild:公會名稱> [hide:False|True] [showlink:False|True(Guild模式預設true，User模式預設false)]\`
+        \`/nethergames faction <faction:派系名稱> [hide:False|True]\`
+        
+        使用例:
+        \`/nethergames player ign:Herobrine90199\`
+        \`/nethergames guild guild:MEOWOWO hide:False showlink:False\`
+        \`/nethergames faction faction:Fly hide:True\``
+    },
+    
     async execute(interaction) {
         const subcmd = interaction.options.getSubcommand();
         const hide = interaction.options?.getBoolean('hide') ?? !interaction.channel;

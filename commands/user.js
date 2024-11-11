@@ -20,6 +20,15 @@ module.exports = {
                 .setDescription('What user needs to search')
                 .setRequired(true)
         ),
+    info: {
+        short: '查詢使用者訊息',
+        full: `查詢使用者訊息
+        命令使用語法:
+        \`/user <user:使用者名稱或ID>\`
+        使用例:
+        \`/user user:@thoy037\`
+        \`/user user:707930906983268422\``
+    },
     async execute(interaction) {
         let userEmbed;
 

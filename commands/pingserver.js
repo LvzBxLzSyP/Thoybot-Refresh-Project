@@ -15,6 +15,16 @@ module.exports = {
             option.setName('count')
                 .setDescription('指定 Ping 的次數（默認為 5）')
                 .setRequired(false)),
+                
+    info: {
+        short: '對遠端主機進行延遲測試',
+        full: `對遠端主機發送ICMP封包抓取延遲(次數預設為5)
+        命令使用語法:
+        \`/pingserver <host:IP位址> [count:次數]\`
+        使用例:
+        \`/pingserver host:192.168.2.100\`
+        \`/pingserver host:www.google.com count:5\``
+    },
 
     async execute(interaction) {
         const host = interaction.options.getString('host');
