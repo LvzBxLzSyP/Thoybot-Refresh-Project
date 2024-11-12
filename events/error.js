@@ -4,7 +4,7 @@ const config = require('../config.json');
 function sendErrorEmbed(client, errorTitle, errorDescription) {
     const errorEmbed = new EmbedBuilder()
         .setTitle(errorTitle)
-        .setDescription(`\`\`\`${errorDescription}\`\`\``)
+        .setDescription(`\`\`\`${String(errorDescription)}\`\`\``) // 保證為字符串
         .setColor(0xFF0000)
         .setTimestamp()
         .setFooter({ text: '快點修掉這個Bug!' });
@@ -15,19 +15,19 @@ function sendErrorEmbed(client, errorTitle, errorDescription) {
     }
 }
 
-// 捕获未处理的 Promise 拒绝
+// 捕捉未處理的 Promise 拒絕
 process.on('unhandledRejection', (reason, promise) => {
     console.error('未處理的 Promise 拒絕：', promise, '原因：', reason);
     sendErrorEmbed(global.client, '未處理的 Promise 拒絕', reason);
 });
 
-// 捕获未处理的异常
+// 捕捉未處理的異常
 process.on('uncaughtException', (error) => {
     console.error('未處理的異常：', error);
     sendErrorEmbed(global.client, '未處理的異常', error.message);
 });
 
-// 事件处理错误
+// 事件處理錯誤
 module.exports = {
     name: 'error',
     once: false,
