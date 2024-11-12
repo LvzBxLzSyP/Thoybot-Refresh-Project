@@ -4,6 +4,8 @@ const config = require('./config.json');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
+global.client = client;
+
 client.commands = new Collection();
 client.commandInfo = {}; // 用來存儲每個命令的info
 
