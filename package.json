@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
     "discord.js": "^14.16.3",
     "luxon": "^3.5.0",
     "moment": "^2.30.1",

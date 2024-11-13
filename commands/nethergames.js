@@ -127,19 +127,26 @@ module.exports = {
         } else if (subcmd === 'guild') {
             const gname = interaction.options.getString('guild');
             const hide = interaction.options?.getBoolean('hide') ?? !interaction.channel;
+            
             try {
                 const { data: results } = await get(`https://api.ngmc.co/v1/guilds/${gname}`, { headers });
-
-                const officers = Array.isArray(results.officers) && results.officers.length > 0
-                    ? results.officers.join(', ') // 如果是數組，將成員以逗號分隔
-                    : 'Not fetched'; // 若不是數組或無成員，顯示 'Not fetched'
-
-                if ( results.position === -1 ) {
-                    lb = 'This server are not in leaderboard'
-                } else if (results.position <= 10) {
-                    lb = `Top ${results.position?.toString()}`;
+                
+                if ( results.rawName = '') {
+                    title = `Guild info: ${results.name}`;
                 } else {
-                    lb = results.position?.toString();
+                        title = `Guild info: ${results.name} (${results.rawTag.slice(2)})`;
+    
+                    const officers = Array.isArray(results.officers) && results.officers.length > 0
+                        ? results.officers.join(', ') // 如果是數組，將成員以逗號分隔
+                        : 'Not fetched'; // 若不是數組或無成員，顯示 'Not fetched'
+    
+                    if ( results.position === -1 ) {
+                        lb = 'This server are not in leaderboard'
+                    } else if (results.position <= 10) {
+                        lb = `Top ${results.position?.toString()}`;
+                    } else {
+                        lb = results.position?.toString();
+                    }
                 }
 
                 let showLink = interaction.options.getBoolean('link');
@@ -158,7 +165,7 @@ module.exports = {
                 }
 
                 let guildEmbed = new EmbedBuilder()
-                    .setTitle(`Guild info: ${results.name} (${results.rawTag.slice(2)})`)
+                    .setTitle(title)
                     .setColor(results.tagColor)
                     .addFields(
                         { name: 'MOTD', value: results.motd || 'Guild has not set MOTD, tell officer to set one!' },
