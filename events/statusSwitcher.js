@@ -31,10 +31,16 @@ module.exports = {
     }
 
     function scheduleNextUpdate() {
+      const now = new Date();
+      // 计算距离下一个分钟开始的时间
+      const timeToNextMinute = (60 - now.getSeconds()) * 1000;
+
       setTimeout(() => {
+        // 每分钟更新一次时区索引
+        currentTimeZoneIndex = 0;  // 每分钟重置为 0
         updateStatus();
         setInterval(updateStatus, 15 * 1000); // 每 15 秒更新一次
-      }, (60 - new Date().getSeconds()) * 1000); // 等待到下一分钟开始
+      }, timeToNextMinute); // 等待到下一分钟开始
     }
 
     // 获取指定时区的时间
@@ -57,11 +63,11 @@ module.exports = {
 
       switch (timeZoneName) {
         case 'Central European Time':
-          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} (${isDSTActive ? 'Central European Summer Time' : 'Central European Time'})`;
+          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} | ${isDSTActive ? 'Central European Summer Time' : 'Central European Time'}`;
         case 'Central Standard Time':
-          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} (${isDSTActive ? 'Central Daylight Time' : 'Central Standard Time'})`;
+          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} | ${isDSTActive ? 'Central Daylight Time' : 'Central Standard Time'}`;
         default:
-          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} (${timeZoneName})`;
+          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} | ${timeZoneName}`;
       }
     }
 
