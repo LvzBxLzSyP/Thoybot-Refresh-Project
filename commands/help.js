@@ -51,7 +51,5 @@ module.exports = {
 
         // 發送主命令的回覆消息
         await interaction.reply({ content: 'Here you go!', embeds: [helpEmbed], components: [row] });
-        const commandInfo = interaction.client.commandInfo[commandName];
-        console.log(commandInfo.toString());
     }
 };
