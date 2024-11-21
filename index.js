@@ -1,6 +1,6 @@
 const { Client, Collection, GatewayIntentBits, REST, Routes, ActivityType, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
-const config = require('./config.json');
+const { config } = require('./config.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
