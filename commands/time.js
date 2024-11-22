@@ -65,6 +65,8 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('time')
         .setDescription('顯示世界各地的時間')
+        .setContexts(0, 1, 2)
+        .setIntegrationTypes(0, 1)
         .addStringOption(option =>
             option.setName('timezone')
                 .setDescription('顯示特定時區 (例如：Asia/Taipei)')
