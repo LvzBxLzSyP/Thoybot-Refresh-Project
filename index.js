@@ -31,7 +31,6 @@ const loadCommands = () => {
             // 如果存在 command.info，將其加入 client.commandInfo 中
             if (command.info) {
                 client.commandInfo[command.data.name] = command.info;
-                console.log(client.commandInfo);
             }
 
         } catch (error) {
@@ -93,6 +92,17 @@ const createButtons = (page, totalPages) => {
         );
 };
 
+function getClockEmoji(time) {
+    const clockEmojis = [
+        '🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠',
+        '🕕', '🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'
+    ];
+    const hour = time.hours() % 12; // 取 12 小時制
+    const halfHour = time.minutes() >= 30 ? 1 : 0; // 判斷是否過半小時
+    const emojiIndex = hour * 2 + halfHour; // 計算 emoji 索引
+    return clockEmojis[emojiIndex];
+}
+
 // 初始化機器人
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
@@ -127,35 +137,41 @@ client.on('interactionCreate', async (interaction) => {
 
     // 處理按鈕交互
     if (interaction.isButton()) {
-        if (!interaction.customId.startsWith('time_')) return; // 確保是time相關的按鈕
-        
+        if (!interaction.customId.startsWith('time_')) return; // 確保是 time 相關的按鈕
+    
         await interaction.deferUpdate();
-        
-        let currentPage = parseInt(interaction.customId.split('_')[2]);  // 正確解析頁數
+    
+        let currentPage = parseInt(interaction.customId.split('_')[2]); // 正確解析頁數
     
         const timezones = moment.tz.names();
-        const totalPages = Math.ceil(timezones.length / ITEMS_PER_PAGE); // 每頁顯示25個時區
+        const totalPages = Math.ceil(timezones.length / ITEMS_PER_PAGE); // 每頁顯示 25 個時區
     
         // 根據按鈕類型更新頁面
         if (interaction.customId.includes('previous') && currentPage > 0) {
-            currentPage--;  // 點擊「上一頁」
+            currentPage--; // 點擊「上一頁」
         } else if (interaction.customId.includes('next') && currentPage < totalPages - 1) {
-            currentPage++;  // 點擊「下一頁」
+            currentPage++; // 點擊「下一頁」
         }
     
         // 創建並準備嵌入
         const embed = new EmbedBuilder()
             .setTitle('世界各地的時間')
             .setDescription(`這是第 ${currentPage + 1} 頁，共 ${totalPages} 頁:`)
-            .setColor('#00FF00');
+            .setColor(getRandomColor());
     
-        // 添加每個時區為單獨的欄位
-        embed.addFields(timezones.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE)
-            .map(tz => ({
-                name: tz,
-                value: moment.tz(tz).format('YYYY-MM-DD HH:mm:ss'),
-                inline: false,
-            }))
+        // 添加每個時區為單獨的欄位，並顯示當地時間與時鐘 emoji
+        embed.addFields(
+            timezones
+                .slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE)
+                .map(tz => {
+                    const time = moment.tz(tz);
+                    const emoji = getClockEmoji(time); // 根據當地時間選擇時鐘 emoji
+                    return {
+                        name: `${tz}`,
+                        value: time.format(`${emoji} YYYY-MM-DD HH:mm:ss`),
+                        inline: false, // 確保每個欄位顯示在單獨的行
+                    };
+                })
         );
     
         // 使用 editReply 更新回應
