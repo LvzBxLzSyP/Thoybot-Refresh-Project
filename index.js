@@ -2,6 +2,7 @@ const { Client, Collection, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, B
 const moment = require('moment-timezone');
 const config = require('./config.json');
 const fs = require('fs');
+const path = require('path');
 
 const ITEMS_PER_PAGE = 25; // 每頁顯示25個時區
 
@@ -13,22 +14,38 @@ client.commands = new Collection();
 client.commandInfo = {}; // 用來存儲每個命令的info
 
 const loadCommands = () => {
-    const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+    if (!client.commands) client.commands = new Map();
+    if (!client.commandInfo) client.commandInfo = {};
 
+    const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
     const commands = [];
+
     for (const file of commandFiles) {
         try {
-            const command = require(`./commands/${file}`);
+            const command = require(path.join(__dirname, 'commands', file));
 
+            // Ensure command structure is valid
             if (!command || !command.data || !command.data.name) {
                 console.warn(`Warning: Command file ${file} is missing 'data' or 'name'. Skipping this file.`);
                 continue;
             }
 
+            // Check if the command is enabled
+            if (command.enabled === false) {
+                console.log(`Command ${command.data.name} is disabled, skipping.`);
+                continue;
+            }
+
+            // Add the command to the collection
             client.commands.set(command.data.name, command);
             commands.push(command.data.toJSON());
 
-            // 如果存在 command.info，將其加入 client.commandInfo 中
+            // Recursively load subcommands
+            if (command.subcommands) {
+                loadSubcommands(command.subcommands, command.data.name);
+            }
+
+            // Save command info if available
             if (command.info) {
                 client.commandInfo[command.data.name] = command.info;
             }
@@ -39,6 +56,35 @@ const loadCommands = () => {
     }
 
     return commands;
+};
+
+// Loading subcommands
+const loadSubcommands = (subcommands, parentName) => {
+    for (const subcommand of subcommands) {
+        try {
+            const fullCommandName = `${parentName} ${subcommand.data.name}`;
+
+            if (!subcommand || !subcommand.data || !subcommand.data.name) {
+                console.warn(`Warning: Subcommand ${fullCommandName} is missing 'data' or 'name'. Skipping this subcommand.`);
+                continue;
+            }
+
+            // Check if the subcommand is enabled
+            if (subcommand.enabled === false) {
+                console.log(`Subcommand ${fullCommandName} is disabled, skipping.`);
+                continue;
+            }
+
+            // Add subcommand to the collection
+            client.commands.set(fullCommandName, subcommand);
+            client.commandInfo[fullCommandName] = subcommand.info || {};
+
+            console.log(`Loaded subcommand: ${fullCommandName}`);
+
+        } catch (error) {
+            console.error(`Error loading subcommand ${parentName} ${subcommand.data.name}:`, error);
+        }
+    }
 };
 
 // 註冊斜線命令

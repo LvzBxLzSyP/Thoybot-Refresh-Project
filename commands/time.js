@@ -84,6 +84,7 @@ module.exports = {
         \`/time\`
         或顯示指定時區: \`/time timezone:<時區>\``
     },
+    enabled: true,
     async execute(interaction) {
         const defaultEphemeral = interaction.channel ? false : true;
         const ephemeral = interaction.options.getBoolean('ephemeral') ?? defaultEphemeral;

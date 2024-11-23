@@ -26,6 +26,7 @@ module.exports = {
         example:
         \`/newgrounds audio id:467339\``
     },
+    enabled: true,
     async execute(interaction) {
         const subcmd = interaction.options.getSubcommand();
         interaction.deferReply();

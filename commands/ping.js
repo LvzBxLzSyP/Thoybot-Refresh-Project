@@ -23,6 +23,7 @@ module.exports = {
         命令使用語法:
         \`/ping\``
     },
+    enabled: true,
     async execute(interaction) {
         // 使用隨機顏色初始化 Ping 值
         const pingEmbed = new EmbedBuilder()

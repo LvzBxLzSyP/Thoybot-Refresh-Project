@@ -18,6 +18,7 @@ module.exports = {
         使用例:
         \`/say message: Hello World!\``
     },
+    enabled: true,
     async execute(interaction) {
         const messageContent = interaction.options.getString('message');
         if (!interaction.channel) {

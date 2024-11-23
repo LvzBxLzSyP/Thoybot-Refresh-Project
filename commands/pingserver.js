@@ -25,7 +25,7 @@ module.exports = {
         \`/pingserver host:192.168.2.100\`
         \`/pingserver host:www.google.com count:5\``
     },
-
+    enabled: true,
     async execute(interaction) {
         const host = interaction.options.getString('host');
         const count = interaction.options.getInteger('count') || 5;
