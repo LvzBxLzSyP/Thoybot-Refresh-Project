@@ -39,9 +39,10 @@ module.exports = {
             const audioTitle = audioInfo("meta[property='og:title']").attr("content") || "Unknown Title";
             const audioAuthor = audioInfo("a.user").text().trim();
             const audioDesc = audioInfo("meta[property='og:description']").attr("content") || "Unknown Description";
+            const audioURL = audioInfo("meta[property='og:audio']").attr("content") || "Unknown URL"
             const audioEmbed = new EmbedBuilder()
                 .setTitle(`Info of audio ${audioTitle} (${audioId})`)
-                .setDescription(audioDesc)
+                .setDescription(audioDesc,'\n',`[Download Audio](${audioURL})`)
                 .setFooter({ text: 'newgrounds.com'})
             
             interaction.editReply({ embeds: [audioEmbed] });
