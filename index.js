@@ -25,14 +25,14 @@ const loadCommands = () => {
             const command = require(path.join(__dirname, 'commands', file));
 
             // Ensure command structure is valid
-            if (!command || !command.data || !command.data.name) {
-                console.warn(`Warning: Command file ${file} is missing 'data' or 'name'. Skipping this file.`);
+            if (!command || !command.data || !command.data.name || !command.execute) {
+                console.warn(`Warning: Command file ${file} is missing 'data' or 'name' or 'execute'. Skipping this file.`);
                 continue;
             }
 
             // Check if the command is enabled
             if (command.enabled === false) {
-                console.log(`Command ${command.data.name} is disabled, skipping.`);
+                console.info(`Command ${command.data.name} is disabled, skipping.`);
                 continue;
             }
 
@@ -64,14 +64,14 @@ const loadSubcommands = (subcommands, parentName) => {
         try {
             const fullCommandName = `${parentName} ${subcommand.data.name}`;
 
-            if (!subcommand || !subcommand.data || !subcommand.data.name) {
-                console.warn(`Warning: Subcommand ${fullCommandName} is missing 'data' or 'name'. Skipping this subcommand.`);
+            if (!subcommand || !subcommand.data || !subcommand.data.name || !subcommand.execute) {
+                console.warn(`Warning: Subcommand ${fullCommandName} is missing 'data' or 'name' or 'execute'. Skipping this subcommand.`);
                 continue;
             }
 
             // Check if the subcommand is enabled
             if (subcommand.enabled === false) {
-                console.log(`Subcommand ${fullCommandName} is disabled, skipping.`);
+                console.info(`Subcommand ${fullCommandName} is disabled, skipping.`);
                 continue;
             }
 
