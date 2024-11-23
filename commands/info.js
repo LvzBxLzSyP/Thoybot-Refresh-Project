@@ -30,6 +30,7 @@ module.exports = {
         命令使用語法:
         \`/info\``
     },
+    enabled: true,
     async execute(interaction) {
         const client = interaction.client;
         const botVersion = "0.2.0"; // 你的機器人版本

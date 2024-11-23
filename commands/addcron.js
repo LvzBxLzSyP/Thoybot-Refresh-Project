@@ -37,6 +37,7 @@ module.exports = {
 1. \`/addcron 2024/11/02 11:40 會議提醒\` — 設置在 2024/11/02 11:40 發送「會議提醒」。
 2. \`/addcron 11:40 早安提醒\` — 設置每天 11:40 發送「早安提醒」。`
     },
+    enabled: true,
     async execute(interaction) {
         const dateTime = interaction.options.getString('datetime');
         const message = interaction.options.getString('message');

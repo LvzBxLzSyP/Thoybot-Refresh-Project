@@ -29,6 +29,7 @@ module.exports = {
         \`/user user:@thoy037\`
         \`/user user:707930906983268422\``
     },
+    enabled: true,
     async execute(interaction) {
         let userEmbed;
         const user = interaction.options.getUser('user');

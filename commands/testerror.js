@@ -5,7 +5,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('testerror')
         .setDescription('test error'),
-
+    enabled: false,
     async execute(interaction) {
         if (interaction.user.id !== config.ownerId) {
             await interaction.reply({ content: 'You have not permission to run this command.' });

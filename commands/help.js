@@ -21,6 +21,7 @@ module.exports = {
         命令使用語法:
         \`/help\``
     },
+    enabled: true,
     async execute(interaction) {
         const helpEmbed = new EmbedBuilder()
             .setTitle('Bot Commands')
