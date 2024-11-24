@@ -29,7 +29,7 @@ module.exports = {
             option.setName('hide')
                 .setDescription('Hiding this message (too long!)')
         ),
-
+    enabled: true,
     async execute(interaction) {
         const pname = interaction.options.getString('ign');
         const hide = interaction.options?.getBoolean('hide') ?? !interaction.channel;

@@ -24,7 +24,7 @@ module.exports = {
             option.setName('link')
                 .setDescription('Show Discord Guild Link')
         ),
-
+    enabled: true,
     async execute(interaction) {
         const gname = interaction.options.getString('guild');
         const hide = interaction.options?.getBoolean('hide') ?? !interaction.channel;

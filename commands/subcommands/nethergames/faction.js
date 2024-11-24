@@ -13,7 +13,7 @@ module.exports = {
             option.setName('hide')
                 .setDescription('Hiding this message (too long!)')
         ),
-
+    enabled: false,
     async execute(interaction) {
         await interaction.editReply({ content: 'I am not done yet' });
     }

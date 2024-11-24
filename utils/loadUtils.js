@@ -17,7 +17,27 @@ fs.readdirSync(utilsPath)
       : utilModule;
 
     // 輸出載入的工具模組名稱
-    console.log(`Loaded utility: ${utilName}`);
+    console.log(`[Bootstrap/Utils] Loaded utility: ${utilName}`);
   });
 
-module.exports = utils;
+// 返回解構要求的工具
+module.exports = (function() {
+  // 檢查當前模塊是否有解構需求
+  if (Object.keys(module.parent.exports).length) {
+    const keys = Object.keys(module.parent.exports);
+    const selectedUtils = {};
+
+    keys.forEach(key => {
+      if (utils[key]) {
+        selectedUtils[key] = utils[key];
+        // 只輸出被解構的工具
+        console.log(`[Bootstrap/Utils] Loaded utility: ${key}`);
+      }
+    });
+
+    return selectedUtils;
+  }
+
+  // 如果沒有使用解構，返回所有工具
+  return utils;
+})();

@@ -8,10 +8,12 @@ module.exports = {
         .setName('nethergames')
         .setDescription('Search Nethergames Things')
         .setContexts(0, 1, 2)
-        .setIntegrationTypes(0, 1)
-        .addSubcommand(playerCommand.data)
-        .addSubcommand(guildCommand.data)
-        .addSubcommand(factionCommand.data),
+        .setIntegrationTypes(0, 1),
+    subcommands: [
+        playerCommand,
+        guildCommand,
+        factionCommand
+    ],
     info: {
         short: '從NGMC API查詢玩家、公會及派系',
         full: `利用NetherGames API查詢玩家、公會、派系的簡略資訊
