@@ -1,34 +1,45 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
+/**
+ * Command to fetch detailed information about a Discord user.
+ * 
+ * @type {import('discord.js').SlashCommandBuilder}
+ */
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("user")
-        .setDescription("show detailed user information")
+        .setDescription("Show detailed user information")
         .setIntegrationTypes(0, 1)
         .setContexts(0, 2)
         .addUserOption(option =>
             option.setName('user')
-                .setDescription('What user needs to search')
+                .setDescription('The user whose information you want to retrieve')
                 .setRequired(true)
         ),
     info: {
-        short: '查詢使用者詳細訊息',
-        full: `查詢使用者詳細訊息
-        命令使用語法:
-        \`/user <user:使用者名稱或ID>\`
-        使用例:
+        short: 'Fetch detailed user information',
+        full: `Fetch detailed information about a user
+        Command syntax:
+        \`/user <user:username_or_id>\`
+        Examples:
         \`/user user:@thoy037\`
         \`/user user:707930906983268422\``
     },
     enabled: true,
+    /**
+     * Executes the command to fetch and display detailed information about a user.
+     * 
+     * @param {import('discord.js').Interaction} interaction - The interaction object that triggered the command.
+     * @returns {Promise<void>}
+     */
     async execute(interaction) {
         let userEmbed;
         const user = interaction.options.getUser('user');
         const createDate = user.createdAt.toLocaleString();
-        const accountAge = Math.floor((Date.now() - user.createdAt) / (1000 * 60 * 60 * 24)); // Days
+        const accountAge = Math.floor((Date.now() - user.createdAt) / (1000 * 60 * 60 * 24)); // Calculate account age in days
 
         if (!interaction.channel) {
-            // DM execution
+            // If the command is executed in DM (Direct Message)
             userEmbed = new EmbedBuilder()
                 .setColor(getRandomColor())
                 .setTitle(`👤 User Info: ${user.tag}`)
@@ -50,7 +61,7 @@ module.exports = {
 
             if (member) {
                 const joinDate = member.joinedAt.toLocaleString();
-                const joinAge = Math.floor((Date.now() - member.joinedAt) / (1000 * 60 * 60 * 24)); // Days
+                const joinAge = Math.floor((Date.now() - member.joinedAt) / (1000 * 60 * 60 * 24)); // Calculate server join age in days
                 const roles = member.roles.cache
                     .filter(role => role.id !== interaction.guild.id) // Exclude @everyone role
                     .map(role => role.toString())
@@ -99,6 +110,7 @@ module.exports = {
             }
         }
 
+        // Send the embedded user information in response to the command
         await interaction.reply({ embeds: [userEmbed] });
     }
 };

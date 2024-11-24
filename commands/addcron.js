@@ -1,81 +1,132 @@
 const { SlashCommandBuilder } = require('discord.js');
-const cron = require('node-cron');
-const { DateTime } = require('luxon'); // 引入 Luxon
+const { DateTime } = require('luxon');
+const fs = require('fs');
+const path = require('path');
 
+// Read configuration from config.json to get the default timezone
+const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../config.json'), 'utf8'));
+const defaultTimezone = config.timezone || 'Asia/Taipei'; // Default timezone is set to 'Asia/Taipei' if not provided
+
+/**
+ * `/addcron` command module
+ * @module addcron
+ */
 module.exports = {
+    /**
+     * Command data structure defining the slash command
+     * @returns {SlashCommandBuilder} The SlashCommandBuilder object defining the command's structure
+     */
     data: new SlashCommandBuilder()
         .setName('addcron')
-        .setDescription('設置提醒，單次或每日提醒')
-        .addStringOption(option => 
+        .setDescription('Set a reminder for a specific time or a daily reminder')
+        .addStringOption(option =>
             option.setName('datetime')
-                .setDescription('請輸入提醒的日期和時間，例如 "2024/11/02 11:40" 或 "11:40" 代表每日提醒')
+                .setDescription('Enter the date and time for the reminder (e.g., "2024/11/02 11:40" or "11:40" for daily reminder)')
                 .setRequired(true))
-        .addStringOption(option => 
+        .addStringOption(option =>
             option.setName('message')
-                .setDescription('要在指定時間提醒的訊息')
-                .setRequired(true)),
+                .setDescription('The message to send at the specified time')
+                .setRequired(true))
+        .addStringOption(option =>
+            option.setName('timezone')
+                .setDescription('Select the timezone (defaults to Taipei timezone)')
+                .setRequired(false))  // Timezone option is not required
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('Select the channel to send the reminder to (leave empty to send it in the same channel or DM)')),
+
+    /**
+     * A short and full description of the command
+     * @type {Object}
+     * @property {string} short - Short description of the command
+     * @property {string} full - Detailed description of the command
+     */
     info: {
-        short: '設置單次或每日提醒，指定時間與訊息。',
+        short: 'Set a one-time or daily reminder with a specific time and message.',
         full: `/addcron <datetime> <message>
-設置提醒，您可以設置單次提醒或每日提醒。
+Set a reminder with either a one-time or daily recurrence.
 
-參數說明：
-- <datetime>：
-    - 單次提醒：請輸入具體的日期和時間，格式為 "YYYY/MM/DD HH:mm"。
-    - 每日提醒：請只輸入時間，格式為 "HH:mm"。此提醒將每天在指定時間發送。
-    例子：
-    - 單次提醒：2024/11/02 11:40
-    - 每日提醒：11:40
+Parameters:
+- <datetime>:
+    - One-time reminder: Provide the exact date and time in "YYYY/MM/DD HH:mm" format.
+    - Daily reminder: Provide only the time in "HH:mm" format. This reminder will trigger daily at the specified time.
+Examples:
+- One-time reminder: 2024/11/02 11:40
+- Daily reminder: 11:40
 
-- <message>：您希望在指定時間發送的訊息。
+- <message>: The message to send at the specified time.
 
-注意：
-- 單次提醒會在指定時間發送提醒，若您設置的時間已過，請提供未來的時間。
-- 每日提醒會在每一天的指定時間發送提醒。
+Note:
+- One-time reminders will trigger at the specified time. If the specified time has already passed, provide a future time.
+- Daily reminders will trigger at the specified time every day.
 
-範例：
-1. \`/addcron 2024/11/02 11:40 會議提醒\` — 設置在 2024/11/02 11:40 發送「會議提醒」。
-2. \`/addcron 11:40 早安提醒\` — 設置每天 11:40 發送「早安提醒」。`
+Examples:
+1. \`/addcron 2024/11/02 11:40 Meeting reminder\` — Sets a one-time reminder for "Meeting reminder" on 2024/11/02 at 11:40.
+2. \`/addcron 11:40 Good morning!\` — Sets a daily reminder for "Good morning!" at 11:40 every day.`
     },
     enabled: true,
+
+    /**
+     * Executes the `/addcron` command logic
+     * @async
+     * @function
+     * @param {import('discord.js').Interaction} interaction - The interaction object from Discord
+     * @returns {Promise<void>} A Promise that resolves with no value
+     */
     async execute(interaction) {
         const dateTime = interaction.options.getString('datetime');
         const message = interaction.options.getString('message');
+        const userTimezone = interaction.options.getString('timezone'); // User-selected timezone
+        const channelOption = interaction.options.getChannel('channel'); // User-selected channel for reminder
 
-        // 設定為東八區（UTC+8）
-        const timezone = 'Asia/Taipei';
+        // Use the user-provided timezone, or fallback to the default timezone if not provided
+        const timezone = userTimezone || defaultTimezone;
 
-        // 檢查輸入格式
-        const fullDateTime = DateTime.fromFormat(dateTime, 'yyyy/MM/dd HH:mm', { zone: timezone }); // 完整日期時間格式
-        const timeOnly = DateTime.fromFormat(dateTime, 'HH:mm', { zone: timezone }); // 僅時間格式（每日提醒）
+        // Attempt to parse the full datetime (one-time reminder)
+        const fullDateTime = DateTime.fromFormat(dateTime, 'yyyy/MM/dd HH:mm', { zone: timezone });
+
+        // Attempt to parse the time part only (daily reminder)
+        const timeOnly = DateTime.fromFormat(dateTime, 'HH:mm', { zone: timezone });
+
+        // Default channel is the current channel, or DM if no channel is provided
+        const targetChannel = channelOption || interaction.channel || interaction.user;
 
         if (fullDateTime.isValid) {
-            // 單次提醒，特定日期和時間
-            const now = DateTime.now().setZone(timezone); // 當前時間設為東八區
+            // One-time reminder, with specific date and time
+            const now = DateTime.now().setZone(timezone); // Get the current time in the specified timezone
             const delay = fullDateTime.diff(now).milliseconds;
 
             if (delay <= 0) {
-                return interaction.reply({ content: '指定的時間已經過去，請提供未來的時間。', ephemeral: true });
+                return interaction.reply({ content: 'The specified time has already passed. Please provide a future time.', ephemeral: true });
             }
 
+            // Send the reminder to the target channel at the specified time
             setTimeout(() => {
-                interaction.channel.send(message);
+                targetChannel.send(message).catch(err => {
+                    console.error('Error sending reminder:', err);
+                });
             }, delay);
 
-            await interaction.reply(`已設定單次提醒，將在 ${fullDateTime.toFormat('yyyy/MM/dd HH:mm')} 發送提醒。`);
+            await interaction.reply({ content: `Reminder set for ${fullDateTime.toFormat('yyyy/MM/dd HH:mm')} in ${targetChannel instanceof interaction.user.constructor ? 'DM' : targetChannel.name}.`, ephemeral: true });
         } else if (timeOnly.isValid) {
-            // 每日提醒，僅時間
+            // Daily reminder, only time part
             const hour = timeOnly.hour;
             const minute = timeOnly.minute;
-            const cronExpression = `${minute} ${hour} * * *`; // 每日的特定時間提醒
+            const cronExpression = `${minute} ${hour} * * *`; // Cron expression for daily reminders
 
-            cron.schedule(cronExpression, () => {
-                interaction.channel.send(message);
-            });
+            // Use the cron expression to trigger the reminder daily
+            const delay = DateTime.now().setZone(timezone).endOf('day').plus({ days: 1 }).set({ hour, minute }).diffNow().milliseconds;
 
-            await interaction.reply(`已設定每日提醒，每天 ${timeOnly.toFormat('HH:mm')} 將發送提醒。`);
+            setTimeout(() => {
+                targetChannel.send(message).catch(err => {
+                    console.error('Error sending reminder:', err);
+                });
+            }, delay);
+
+            await interaction.reply({ content: `Daily reminder set for ${hour}:${minute} in ${targetChannel instanceof interaction.user.constructor ? 'DM' : targetChannel.name}.`, ephemeral: true });
         } else {
-            await interaction.reply({ content: '無效的時間格式。請使用 "YYYY/MM/DD HH:mm" 或 "HH:mm" 格式。', ephemeral: true });
+            // Invalid time format
+            await interaction.reply({ content: 'Invalid time format. Please use the "YYYY/MM/DD HH:mm" or "HH:mm" format.', ephemeral: true });
         }
     },
 };

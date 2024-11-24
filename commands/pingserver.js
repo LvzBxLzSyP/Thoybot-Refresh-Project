@@ -1,108 +1,125 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const ping = require('ping'); // 確保已安裝 `ping` 模組
 
+/**
+ * The pingserver command that pings a given host and returns latency statistics.
+ * 
+ * @type {import('discord.js').SlashCommand}
+ */
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pingserver')
-        .setDescription('對指定主機進行延遲測試')
+        .setDescription('Test the latency of a specified host.')
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1)
         .addStringOption(option => 
             option.setName('host')
-                .setDescription('請輸入要 Ping 的主機名稱或 IP 地址')
+                .setDescription('Enter the host name or IP address to ping.')
                 .setRequired(true))
         .addIntegerOption(option => 
             option.setName('count')
-                .setDescription('指定 Ping 的次數（默認為 5）')
+                .setDescription('Specify the number of pings (default is 5).')
                 .setRequired(false)),
                 
     info: {
-        short: '對遠端主機進行延遲測試',
-        full: `對遠端主機發送ICMP封包抓取延遲(次數預設為5)
-        命令使用語法:
-        \`/pingserver <host:IP位址> [count:次數]\`
-        使用例:
+        short: 'Test latency to a remote server.',
+        full: `Send ICMP packets to a remote host to measure latency (default is 5 pings)
+        Command usage:
+        \`/pingserver <host:IP address> [count: number of pings]\`
+        Example:
         \`/pingserver host:192.168.2.100\`
         \`/pingserver host:www.google.com count:5\``
     },
     enabled: true,
-    async execute(interaction) {
-        const host = interaction.options.getString('host');
-        const count = interaction.options.getInteger('count') || 5;
 
-        // 創建初始嵌入消息
+    /**
+     * Executes the /pingserver command.
+     * 
+     * @param {import('discord.js').CommandInteraction} interaction The interaction object
+     */
+    async execute(interaction) {
+        const host = interaction.options.getString('host');  // The host/IP to ping
+        const count = interaction.options.getInteger('count') || 5; // Number of pings (default is 5)
+
+        // Create the initial embed message
         const embed = new EmbedBuilder()
-            .setTitle(`正在 Ping ${host}...`)
-            .setDescription('請稍候...')
+            .setTitle(`Pinging ${host}...`)
+            .setDescription('Please wait...')
             .setColor('Random');
 
         const message = await interaction.reply({ embeds: [embed], fetchReply: true });
 
-        let pingResults = [];
-        let successfulPings = 0;
-        let failedPings = 0;
+        let pingResults = []; // Array to store ping results
+        let successfulPings = 0; // Counter for successful pings
+        let failedPings = 0; // Counter for failed pings
 
+        // Loop through the number of pings to send
         for (let i = 1; i <= count; i++) {
             try {
-                const res = await ping.promise.probe(host);
-                let currentPing = res.alive ? res.time : '失敗';
+                const res = await ping.promise.probe(host);  // Perform the ping
+                let currentPing = res.alive ? res.time : 'Failed'; // Check if ping was successful
 
+                // Track ping results
                 if (res.alive) {
                     successfulPings++;
                     pingResults.push(res.time);
                 } else {
                     failedPings++;
-                    pingResults.push(null); // 記錄失敗的 ping 次數
+                    pingResults.push(null); // Record failed pings as null
                 }
 
+                // Calculate the max, min, and average ping
                 const validPings = pingResults.filter(time => time !== null);
                 const maxPing = validPings.length ? Math.max(...validPings) : 'N/A';
                 const minPing = validPings.length ? Math.min(...validPings) : 'N/A';
                 const avgPing = validPings.length ? (validPings.reduce((a, b) => a + b, 0) / validPings.length).toFixed(2) : 'N/A';
 
-                // 更新嵌入信息
-                embed.setDescription(`已完成 ${i}/${count} 次 Ping\n成功: ${successfulPings}, 失敗: ${failedPings}`)
+                // Update embed with current ping statistics
+                embed.setDescription(`Ping attempt ${i}/${count}\nSuccessful: ${successfulPings}, Failed: ${failedPings}`)
                     .setFields(
-                        { name: '目前延遲', value: `${currentPing} ms`, inline: true },
-                        { name: '最高延遲', value: `${maxPing} ms`, inline: true },
-                        { name: '最低延遲', value: `${minPing} ms`, inline: true },
-                        { name: '平均延遲', value: `${avgPing} ms`, inline: true }
+                        { name: 'Current Latency', value: `${currentPing} ms`, inline: true },
+                        { name: 'Max Latency', value: `${maxPing} ms`, inline: true },
+                        { name: 'Min Latency', value: `${minPing} ms`, inline: true },
+                        { name: 'Avg Latency', value: `${avgPing} ms`, inline: true }
                     )
                     .setColor(res.alive ? 'Random' : 'Red');
 
-                // 使用 interaction.editReply 更新嵌入消息
+                // Edit the reply with the updated embed
                 await interaction.editReply({ embeds: [embed] });
+
+                // Add 1 second delay between each ping
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
             } catch (error) {
                 failedPings++;
-                pingResults.push(null); // 記錄發生錯誤的 ping 次數
-                embed.setDescription(`已完成 ${i}/${count} 次 Ping\n成功: ${successfulPings}, 失敗: ${failedPings}`)
+                pingResults.push(null); // Record failed pings as null
+                embed.setDescription(`Ping attempt ${i}/${count}\nSuccessful: ${successfulPings}, Failed: ${failedPings}`)
                     .setColor('Red')
-                    .setFooter({ text: '發生錯誤，請檢查主機地址或網絡連接' });
+                    .setFooter({ text: 'An error occurred, please check the host address or network connection.' });
 
-                // 使用 interaction.editReply 更新嵌入消息
+                // Edit the reply with the updated embed
                 await interaction.editReply({ embeds: [embed] });
                 console.error(`Ping error on attempt ${i}:`, error);
             }
         }
 
-        // 統計結果
+        // Final statistics calculation
         const validPings = pingResults.filter(time => time !== null);
         const maxPing = validPings.length ? Math.max(...validPings) : 'N/A';
         const minPing = validPings.length ? Math.min(...validPings) : 'N/A';
         const avgPing = validPings.length ? (validPings.reduce((a, b) => a + b, 0) / validPings.length).toFixed(2) : 'N/A';
 
-        // 最終更新嵌入消息
-        embed.setTitle(`Ping ${host} 完成`)
+        // Update final embed message with overall statistics
+        embed.setTitle(`Ping to ${host} Complete`)
             .setColor(successfulPings === count ? 'Green' : 'Red')
-            .setDescription(`共 ${count} 次 Ping\n成功: ${successfulPings}, 失敗: ${failedPings}`)
+            .setDescription(`Total Pings: ${count}\nSuccessful: ${successfulPings}, Failed: ${failedPings}`)
             .setFields(
-                { name: '最高延遲', value: `${maxPing} ms`, inline: true },
-                { name: '最低延遲', value: `${minPing} ms`, inline: true },
-                { name: '平均延遲', value: `${avgPing} ms`, inline: true }
+                { name: 'Max Latency', value: `${maxPing} ms`, inline: true },
+                { name: 'Min Latency', value: `${minPing} ms`, inline: true },
+                { name: 'Avg Latency', value: `${avgPing} ms`, inline: true }
             );
 
-        // 使用 interaction.editReply 更新最終嵌入消息
+        // Final update of the reply with the final embed
         await interaction.editReply({ embeds: [embed] });
     },
 };

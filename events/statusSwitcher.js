@@ -1,10 +1,24 @@
 const { ActivityType } = require('discord.js');
+const moment = require('moment-timezone');
 
+/**
+ * Event that triggers when the bot is ready and updates its status periodically based on different time zones.
+ * 
+ * Every minute, the bot will display the time according to the current time zone and switch between different time zones.
+ * The displayed time will be formatted with the time zone name and a corresponding clock emoji.
+ * 
+ * @module events/ready
+ */
 module.exports = {
-  name: 'ready',
-  once: true,
+  name: 'ready', // The name of the event, indicating when the bot is ready
+  once: true, // This event triggers only once when the bot is ready
+  /**
+   * Executes when the bot is ready, updating the bot's status based on the time zone.
+   * 
+   * @param {Client} client - The Discord client instance used to set the bot's activity.
+   */
   execute(client) {
-    let currentTimeZoneIndex = 0;
+    let currentTimeZoneIndex = 0; // Index of the current time zone
     const timeZones = [
       { name: 'Taipei Standard Time', timeZone: 'Asia/Taipei' },
       { name: 'Coordinated Universal Time', timeZone: 'UTC' },
@@ -12,75 +26,96 @@ module.exports = {
       { name: 'Central Standard Time', timeZone: 'America/Chicago' }
     ];
 
+    /**
+     * Updates the bot's status with the current time in the selected time zone.
+     * The status includes the time and the appropriate clock emoji.
+     */
     function updateStatus() {
-      const now = new Date();
+      const now = moment(); // Get the current moment
       const { name, timeZone } = timeZones[currentTimeZoneIndex];
       const timeInTimeZone = getTimeInTimeZone(now, timeZone);
 
-      // 格式化时间字符串
+      // Format the time string
       const timeString = formatTimeString(timeInTimeZone, name, timeZone);
 
-      // 根据当前时间选择适当的时钟 emoji
+      // Get the appropriate clock emoji based on the time
       const clockEmoji = getClockEmoji(timeInTimeZone);
 
-      // 更新状态
+      // Update the bot's activity status
       client.user.setActivity(`${clockEmoji} ${timeString}`, { type: ActivityType.Custom });
 
-      // 切换到下一个时区
+      // Move to the next time zone in the list
       currentTimeZoneIndex = (currentTimeZoneIndex + 1) % timeZones.length;
     }
 
+    /**
+     * Schedules the next update after waiting for the next minute to start,
+     * and then updates the status every 15 seconds.
+     */
     function scheduleNextUpdate() {
-      const now = new Date();
-      // 计算距离下一个分钟开始的时间
-      const timeToNextMinute = (60 - now.getSeconds()) * 1000;
+      const now = moment();
+      const timeToNextMinute = (60 - now.seconds()) * 1000; // Wait until the next minute
 
       setTimeout(() => {
-        // 每分钟更新一次时区索引
-        currentTimeZoneIndex = 0;  // 每分钟重置为 0
-        updateStatus();
-        setInterval(updateStatus, 15 * 1000); // 每 15 秒更新一次
-      }, timeToNextMinute); // 等待到下一分钟开始
+        currentTimeZoneIndex = 0;  // Reset to the first time zone
+        updateStatus(); // Update the status
+        setInterval(updateStatus, 15 * 1000); // Update the status every 15 seconds
+      }, timeToNextMinute);
     }
 
-    // 获取指定时区的时间
-    function getTimeInTimeZone(date, timeZone) {
-      return new Date(date.toLocaleString('en-US', { timeZone }));
+    /**
+     * Converts the current time to a specified time zone using moment-timezone.
+     * 
+     * @param {Moment} time - The current moment object.
+     * @param {string} timeZone - The name of the time zone (e.g., 'Asia/Taipei').
+     * @returns {Moment} - The moment object in the specified time zone.
+     */
+    function getTimeInTimeZone(time, timeZone) {
+      return time.tz(timeZone); // Convert the time to the specified time zone
     }
 
-    // 判斷是否為 DST
-    function isDST(date, timeZone) {
-      const january = new Date(Date.UTC(date.getUTCFullYear(), 0, 1)).toLocaleString("en-US", { timeZone });
-      const current = date.toLocaleString("en-US", { timeZone });
-      return new Date(january).getTimezoneOffset() !== new Date(current).getTimezoneOffset();
+    /**
+     * Determines if the specified moment is in Daylight Saving Time (DST).
+     * 
+     * @param {Moment} time - The current moment object.
+     * @param {string} timeZone - The time zone to check (e.g., 'Asia/Taipei').
+     * @returns {boolean} - Returns true if the time is in DST, otherwise false.
+     */
+    function isDST(time, timeZone) {
+      const january = moment.tz(time.year(), timeZone).month(0).date(1); // January 1st of the current year
+      return time.isDST(); // Check if the current time is in DST
     }
 
-    // 格式化时间字符串
+    /**
+     * Formats the time string based on the specified time zone.
+     * 
+     * @param {Moment} time - The moment object in the specified time zone.
+     * @param {string} timeZoneName - The name of the time zone (e.g., 'Taipei Standard Time').
+     * @param {string} timeZone - The name of the time zone (e.g., 'Asia/Taipei').
+     * @returns {string} - The formatted time string, including AM/PM and time zone information.
+     */
     function formatTimeString(time, timeZoneName, timeZone) {
-      const hour12 = time.getHours() % 12 || 12;
-      const ampm = time.getHours() >= 12 ? 'PM' : 'AM';
-      const isDSTActive = isDST(time, timeZone); // 檢查是否為 DST
+      const hour12 = time.hours() % 12 || 12;
+      const ampm = time.hours() >= 12 ? 'PM' : 'AM';
+      const isDSTActive = isDST(time, timeZone);
 
       switch (timeZoneName) {
         case 'Central European Time':
-          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} | ${isDSTActive ? 'Central European Summer Time' : 'Central European Time'}`;
+          return `${hour12.toString().padStart(2, '0')}:${time.minutes().toString().padStart(2, '0')} ${ampm} | ${isDSTActive ? 'Central European Summer Time' : 'Central European Time'}`;
         case 'Central Standard Time':
-          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} | ${isDSTActive ? 'Central Daylight Time' : 'Central Standard Time'}`;
+          return `${hour12.toString().padStart(2, '0')}:${time.minutes().toString().padStart(2, '0')} ${ampm} | ${isDSTActive ? 'Central Daylight Time' : 'Central Standard Time'}`;
         default:
-          return `${hour12.toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')} ${ampm} | ${timeZoneName}`;
+          return `${hour12.toString().padStart(2, '0')}:${time.minutes().toString().padStart(2, '0')} ${ampm} | ${timeZoneName}`;
       }
     }
 
-    // 根据时间选择适当的时钟 emoji
-    function getClockEmoji(time) {
-      const clockEmojis = [
-        '🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠',
-        '🕕', '🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'
-      ];
-      const emojiIndex = time.getHours() % 12 * 2 + Math.floor(time.getMinutes() / 30);
-      return clockEmojis[emojiIndex];
-    }
+    /**
+     * Returns a clock emoji based on the current time.
+     * 
+     * @param {Moment} time - The moment object representing the time.
+     * @returns {string} - A clock emoji representing the current time.
+     */
 
-    scheduleNextUpdate();
+    scheduleNextUpdate(); // Start the update scheduling
   },
 };
