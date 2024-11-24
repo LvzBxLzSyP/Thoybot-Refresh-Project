@@ -1,14 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, version: discordVersion } = require("discord.js");
 
-function getRandomColor() {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
-
 function formatUptime(uptime) {
     const days = Math.floor(uptime / (1000 * 60 * 60 * 24));
     const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
