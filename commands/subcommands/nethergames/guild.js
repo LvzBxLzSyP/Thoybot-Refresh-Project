@@ -65,7 +65,10 @@ module.exports = {
         } catch (error) {
             if (error.response?.data?.code === 10006 && error.response?.data?.message === 'Unknown Guild') {
                 await interaction.editReply({ content: 'Guild Not Found' });
+            } else if (error.code === 200000) {
+                await interaction.editReply({ content: 'Message was blocked by AutoMod. Try use command without link' });
             } else {
+                console.error(error);
                 await interaction.editReply({ content: 'Error fetching guild info. Please try later!' });
             }
         }

@@ -1,13 +1,19 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../config.json');
 
+/**
+ * Sends an error message embedded card to a specified channel.
+ * @param {import('discord.js').Client} client - The Discord client instance.
+ * @param {string} errorTitle - The error title.
+ * @param {string} errorDescription - The error description content.
+ */
 function sendErrorEmbed(client, errorTitle, errorDescription) {
     const errorEmbed = new EmbedBuilder()
         .setTitle(errorTitle)
-        .setDescription(`\`\`\`${String(errorDescription)}\`\`\``) // 保證為字符串
+        .setDescription(`\`\`\`${String(errorDescription)}\`\`\``) // Ensure it's a string
         .setColor(0xFF0000)
         .setTimestamp()
-        .setFooter({ text: '快點修掉這個Bug!' });
+        .setFooter({ text: 'Fix this bug quickly!' });
 
     const errorChannel = client.channels.cache.get(config.errorChannelId);
     if (errorChannel) {
@@ -15,24 +21,34 @@ function sendErrorEmbed(client, errorTitle, errorDescription) {
     }
 }
 
-// 捕捉未處理的 Promise 拒絕
+// Capture unhandled Promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('未處理的 Promise 拒絕：', promise, '原因：', reason);
-    sendErrorEmbed(global.client, '未處理的 Promise 拒絕', reason);
+    console.error('Unhandled Promise Rejection:', promise, 'Reason:', reason);
+    // Ensure the client object is passed
+    if (global.client) sendErrorEmbed(global.client, 'Unhandled Promise Rejection', reason);
 });
 
-// 捕捉未處理的異常
+// Capture uncaught exceptions
 process.on('uncaughtException', (error) => {
-    console.error('未處理的異常：', error);
-    sendErrorEmbed(global.client, '未處理的異常', error.message);
+    console.error('Unhandled Exception:', error);
+    // Ensure the client object is passed
+    if (global.client) sendErrorEmbed(global.client, 'Unhandled Exception', error.message);
 });
 
-// 事件處理錯誤
+/**
+ * Handles the Discord client error event and sends an error message embedded card.
+ * @param {Error} error - The error that occurred.
+ * @param {import('discord.js').Client} client - The Discord client instance.
+ */
 module.exports = {
     name: 'error',
     once: false,
     execute(error, client) {
-        console.error('Discord Client 錯誤:', error);
-        sendErrorEmbed(client, 'Bot 錯誤', error.message);
+        console.error('Discord Client Error:', error);
+        try {
+            sendErrorEmbed(client, 'Bot Error', error.message);
+        } catch (err) {
+            console.error('Error occurred while sending the error message:', err);
+        }
     },
 };

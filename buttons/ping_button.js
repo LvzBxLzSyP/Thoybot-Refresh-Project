@@ -1,22 +1,34 @@
 const { EmbedBuilder } = require('discord.js');
 
+/**
+ * Handles button interactions and updates the ping message.
+ * @module ping_button
+ */
 module.exports = {
-    customId: ['ping_button'], // 對應按鈕 ID
+    customId: ['ping_button'], // Button ID associated with the interaction
+
+    /**
+     * Executes when the user presses the "ping_button" button.
+     * 
+     * @param {import('discord.js').Interaction} interaction - The interaction event from the user
+     * @returns {Promise<void>} - No return value
+     */
     async execute(interaction) {
-        // 防止非互動發起者使用按鈕
+        // Prevent users other than the one who initiated the interaction from using the button
         if (interaction.user.id !== interaction.message.interaction.user.id) {
-            return interaction.reply({ content: '這不是你的按鈕！', ephemeral: true });
+            return interaction.reply({ content: 'This is not your button!', ephemeral: true });
         }
 
-        // 確認按鈕互動
+        // Acknowledge the button interaction
         await interaction.deferUpdate();
 
-        // 更新嵌入訊息
+        // Create a new embed message with the updated ping information
         const newPingEmbed = new EmbedBuilder()
-            .setColor(global.getRandomColor()) // 使用全局定義的 getRandomColor
-            .setTitle('Ping 訊息')
-            .setDescription(`延遲為 ${interaction.client.ws.ping}ms`);
+            .setColor(global.getRandomColor())  // Use the global getRandomColor function for a random color
+            .setTitle('Ping Message')  // Title of the embed
+            .setDescription(`The latency is ${interaction.client.ws.ping}ms`);  // Description with the current WebSocket ping
 
-        await interaction.editReply({ embeds: [newPingEmbed] }); // 更新訊息
-    },
+        // Update the original message with the new embed
+        await interaction.editReply({ embeds: [newPingEmbed] });
+    }
 };

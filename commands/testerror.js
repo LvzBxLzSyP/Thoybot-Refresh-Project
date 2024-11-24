@@ -1,42 +1,64 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const config = require('../config.json');
 
+/**
+ * This is a command to test error handling in the bot.
+ * Only the owner (configured in config.json) is allowed to execute it.
+ * If an error occurs, it will be reported to a specified channel.
+ *
+ * @module TestErrorCommand
+ */
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('testerror')
-        .setDescription('test error'),
+        .setDescription('Test error handling'),
+
+    /**
+     * Whether the command is enabled or not.
+     * @type {boolean}
+     */
     enabled: false,
+
+    /**
+     * Executes the 'testerror' command.
+     * This command intentionally throws an error to test the bot's error handling.
+     *
+     * @async
+     * @param {import('discord.js').CommandInteraction} interaction The interaction object from the user.
+     * @returns {Promise<void>} A promise indicating the command has been executed.
+     */
     async execute(interaction) {
+        // Check if the user is the bot owner
         if (interaction.user.id !== config.ownerId) {
-            await interaction.reply({ content: 'You have not permission to run this command.' });
+            await interaction.reply({ content: 'You do not have permission to run this command.' });
             return;
         }
 
         try {
-            // 故意拋出一個錯誤來測試錯誤處理
-            throw new Error('a test error happens');
+            // Intentionally throw an error to test error handling
+            throw new Error('A test error happened');
 
         } catch (error) {
-            // 捕獲錯誤並將錯誤信息發送到錯誤處理系統
-            console.error('test errors:', error);
+            // Catch the error and log it to the console
+            console.error('Test error occurred:', error);
 
-            // 創建錯誤訊息的Embed
+            // Create an embed for the error message
             const errorEmbed = new EmbedBuilder()
-                .setTitle('Bot error')
-                .setDescription(`Happens test error：\n\`\`\`${error.message}\`\`\``)
+                .setTitle('Bot Error')
+                .setDescription(`Test Error:\n\`\`\`${error.message}\`\`\``)
                 .setColor(0xFF0000)
                 .setTimestamp()
-                .setFooter({ text: 'This is test error, so you can skip it' });
+                .setFooter({ text: 'This is a test error, you can ignore it' });
 
-            // 發送錯誤訊息到指定的頻道（假設已經設置好 config）
+            // Send the error message to the configured error channel
             const errorChannel = interaction.client.channels.cache.get(config.errorChannelId);
             if (errorChannel) {
                 errorChannel.send({ embeds: [errorEmbed] }).catch(console.error);
             }
 
-            // 回覆用戶錯誤已發生
+            // Reply to the user that the error has been reported
             await interaction.reply({
-                content: 'An error occurred, we have reported it to the administrator',
+                content: 'An error occurred, and it has been reported to the administrator.',
                 ephemeral: true,
             });
         }

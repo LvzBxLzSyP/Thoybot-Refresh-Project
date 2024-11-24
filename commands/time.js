@@ -1,116 +1,119 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
 const moment = require('moment-timezone');
 
-const ITEMS_PER_PAGE = 25; // 每頁顯示25個時區
+const ITEMS_PER_PAGE = 25; // Number of timezones per page
 
-// 計算時區訊息
+/**
+ * Generate fields for the timezones to be displayed in the embed.
+ * @param {number} page - The page number to display.
+ * @returns {Array<Object>} An array of objects representing the timezones and their formatted times.
+ */
 const getTimezoneFields = (page) => {
     const timezones = moment.tz.names();
     const startIndex = page * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     const timezonesOnPage = timezones.slice(startIndex, endIndex);
 
-    // 使用 addFields 來為每個時區創建一個欄位
+    // Create fields for each timezone
     return timezonesOnPage.map(tz => {
         const time = moment.tz(tz);
-        const emoji = getClockEmoji(time); // 根據當地時間選擇時鐘 emoji
+        const emoji = global.getClockEmoji(time); // Use the global getClockEmoji function
         return {
-            name: `${tz}`, // 顯示時鐘 emoji 和時區
+            name: `${tz}`, // Show the timezone
             value: time.format(`${emoji} YYYY-MM-DD HH:mm:ss`),
-            inline: false, // 確保每個欄位顯示在單獨的行
+            inline: false, // Make sure each field is displayed in a separate line
         };
     });
 };
 
-// 選擇對應的時鐘 emoji
-function getClockEmoji(time) {
-    const clockEmojis = [
-        '🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠',
-        '🕕', '🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'
-    ];
-    const hour = time.hours() % 12; // 取 12 小時制
-    const halfHour = time.minutes() >= 30 ? 1 : 0; // 判斷是否過半小時
-    const emojiIndex = hour * 2 + halfHour; // 計算 emoji 索引
-    return clockEmojis[emojiIndex];
-}
-
-// 創建按鈕
+/**
+ * Create navigation buttons for the embed.
+ * @param {number} page - The current page number.
+ * @param {number} totalPages - The total number of pages.
+ * @returns {ActionRowBuilder} A row of buttons for navigation.
+ */
 const createButtons = (page, totalPages) => {
     return new ActionRowBuilder()
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(`time_previous_${page}`)
-                .setLabel('上一頁')
+                .setLabel('Previous')
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(page === 0),
             new ButtonBuilder()
                 .setCustomId(`time_next_${page}`)
-                .setLabel('下一頁')
+                .setLabel('Next')
                 .setStyle(ButtonStyle.Primary)
                 .setDisabled(page === totalPages - 1)
         );
 };
 
-// 定義 `/time` 命令，使用 SlashCommandBuilder
+/**
+ * Time command handler to show the current time in various timezones.
+ */
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('time')
-        .setDescription('顯示世界各地的時間')
+        .setDescription('Display the current time in different timezones.')
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1)
         .addStringOption(option =>
             option.setName('timezone')
-                .setDescription('顯示特定時區 (例如：Asia/Taipei)')
+                .setDescription('Show the time for a specific timezone (e.g., Asia/Taipei)')
                 .setRequired(false)
         )
         .addBooleanOption(option =>
             option.setName('ephemeral')
-                .setDescription('是否顯示臨時訊息')
+                .setDescription('Whether to display the message as ephemeral')
                 .setRequired(false)
         ),
     info: {
-        short: '顯示世界各地的時間',
-        full: `顯示所有被 IANA 定義的時區
-        命令使用語法:
+        short: 'Display the current time in different timezones',
+        full: `Display the current time for all IANA defined timezones.
+        Command usage:
         \`/time\`
-        或顯示指定時區: \`/time timezone:<時區>\``
+        Or show a specific timezone: \`/time timezone:<timezone>\``
     },
     enabled: true,
+    /**
+     * Executes the command to display the current time in different timezones.
+     * @param {import('discord.js').CommandInteraction} interaction - The interaction that triggered the command.
+     */
     async execute(interaction) {
         const defaultEphemeral = interaction.channel ? false : true;
         const ephemeral = interaction.options.getBoolean('ephemeral') ?? defaultEphemeral;
         const specifiedTimezone = interaction.options.getString('timezone');
 
-        // 啟用 deferReply 以延遲回應，避免 Unknown Interaction 錯誤
+        // Defer the reply to avoid Unknown Interaction error
         await interaction.deferReply({ ephemeral });
 
         const timezones = moment.tz.names();
 
-        // 如果使用者指定了時區，直接顯示該時區的時間
+        // If a timezone is specified, show the time for that timezone
         if (specifiedTimezone) {
             if (!timezones.includes(specifiedTimezone)) {
                 return interaction.editReply({
-                    content: `無效的時區名稱：\`${specifiedTimezone}\`，請輸入正確的時區名稱！`,
+                    content: `Invalid timezone name: \`${specifiedTimezone}\`. Please enter a valid timezone!`,
                 });
             }
 
             const timeInSpecifiedZone = moment.tz(specifiedTimezone);
-            const emoji = getClockEmoji(timeInSpecifiedZone); // 根據指定的時區時間選擇時鐘 emoji
+            const emoji = global.getClockEmoji(timeInSpecifiedZone); // Get the clock emoji for the specified timezone
             const embed = new EmbedBuilder()
-                .setTitle(`時區：${specifiedTimezone}`)
-                .setDescription(`目前時間：${emoji} ${timeInSpecifiedZone.format('YYYY-MM-DD HH:mm:ss')}`)
+                .setTitle(`Timezone: ${specifiedTimezone}`)
+                .setDescription(`Current time: ${emoji} ${timeInSpecifiedZone.format('YYYY-MM-DD HH:mm:ss')}`)
                 .setColor(getRandomColor());
 
             return interaction.editReply({ embeds: [embed] });
         }
 
-        // 沒有指定時區，顯示預設分頁
+        // If no timezone is specified, show the first page of timezones
         const totalPages = Math.ceil(timezones.length / ITEMS_PER_PAGE);
         const currentPage = 0;
 
         const embed = new EmbedBuilder()
-            .setTitle('世界各地的時間')
-            .setDescription(`這是第 1 頁，共 ${totalPages} 頁:`)
+            .setTitle('Current Time in Different Timezones')
+            .setDescription(`This is page 1 of ${totalPages}:`)
             .setColor(getRandomColor())
             .addFields(getTimezoneFields(currentPage));
 

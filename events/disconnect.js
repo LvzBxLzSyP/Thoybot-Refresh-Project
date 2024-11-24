@@ -1,38 +1,56 @@
+/**
+ * Handles the bot's disconnection event and attempts to reconnect.
+ * 
+ * When the bot disconnects, it tries to reconnect after 10 seconds, up to 5 times.
+ * If the reconnection fails more than the maximum number of attempts, the program will exit.
+ * 
+ * @module events/disconnect
+ */
 const { token } = require('../config.json');
 
 module.exports = {
-    name: 'disconnect',
-    once: false,
+    name: 'disconnect', // Event name
+    once: false, // Set whether the event is triggered only once
+    /**
+     * This function is executed when the bot disconnects and attempts automatic reconnection.
+     * 
+     * @param {Client} client - The Discord client instance of the bot.
+     */
     execute(client) {
-        const MAX_RETRIES = 5; // 設置最大重試次數
-        let retryCount = 0;
+        const MAX_RETRIES = 5; // Set the maximum number of retry attempts
+        let retryCount = 0; // Initial retry count
 
         client.on('disconnect', () => {
-            console.log('機器人斷線，10秒後嘗試重新連接...');
-            
+            console.log('Bot disconnected, attempting to reconnect in 10 seconds...');
+
+            /**
+             * Recursive function to attempt reconnection.
+             * 
+             * @returns {void}
+             */
             const reconnect = () => {
                 if (retryCount < MAX_RETRIES) {
                     setTimeout(() => {
-                        client.login(token)
+                        client.login(token) // Attempt to log in again
                             .then(() => {
-                                console.log('重新連接成功');
-                                retryCount = 0; // 重置計數器
+                                console.log('Reconnected successfully');
+                                retryCount = 0; // Reset the retry counter after success
                             })
                             .catch((err) => {
-                                retryCount++;
-                                console.error(`重新連接失敗 (第 ${retryCount} 次)：`, err);
+                                retryCount++; // Increment the retry count
+                                console.error(`Reconnection failed (Attempt ${retryCount}):`, err);
                                 if (retryCount >= MAX_RETRIES) {
-                                    console.error('已達到最大重試次數，程序即將退出...');
-                                    process.exit(1);
+                                    console.error('Max retries reached, exiting the program...');
+                                    process.exit(1); // Exit after exceeding the maximum retry attempts
                                 } else {
-                                    reconnect(); // 再次嘗試
+                                    reconnect(); // Continue attempting to reconnect
                                 }
                             });
-                    }, 10000); // 10秒延遲
+                    }, 10000); // Delay of 10 seconds
                 }
             };
 
-            reconnect(); // 初次重連嘗試
+            reconnect(); // Initial reconnection attempt
         });
     },
 };
