@@ -24,7 +24,6 @@ module.exports = {
     enabled: true,
     async execute(interaction) {
         const client = interaction.client;
-        const botVersion = "0.2.0"; // 你的機器人版本
         const uptime = formatUptime(client.uptime);
         let infoEmbed;
 
@@ -36,7 +35,7 @@ module.exports = {
             `📝 Commands: ${client.commands?.size || 'N/A'}`,
             `📊 Memory Usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`,
             `🔧 Discord.js: v${discordVersion}`,
-            `📌 Bot Version: v${botVersion}`
+            `📌 Bot Version: v${appVer}`
         ].join('\n');
 
         // 檢查是否在頻道中調用
