@@ -1,16 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-// 隨機生成顏色的函數
-function getRandomColor() {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('ping')

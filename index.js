@@ -3,14 +3,17 @@ const moment = require('moment-timezone');
 const config = require('./config.json');
 const fs = require('fs');
 const path = require('path');
+const utils = require('./utils/loadUtils.js');
 
 const ITEMS_PER_PAGE = 25; // 每頁顯示25個時區
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 global.client = client;
+global.getRandomColor = utils.getRandomColor;
 
 client.commands = new Collection();
+client.selectMenus = new Collection();
 client.commandInfo = {}; // 用來存儲每個命令的info
 
 const loadCommands = () => {
@@ -87,6 +90,27 @@ const loadSubcommands = (subcommands, parentName) => {
     }
 };
 
+const loadSelectMenus = async () => {
+    const selectMenuPath = path.join(__dirname, 'selectmenu'); // 取得 selectmenu 目錄的路徑
+
+    // 讀取目錄下所有以 .js 結尾的文件
+    const selectMenuFiles = fs.readdirSync(selectMenuPath).filter(file => file.endsWith('.js'));
+
+    // 遍歷每個 select menu 文件
+    for (const file of selectMenuFiles) {
+        const filePath = path.join(selectMenuPath, file);  // 取得文件的完整路徑
+        const selectMenu = require(filePath);  // 动态加载模块
+
+        if (selectMenu.data && selectMenu.execute) {
+            // 註冊每個 select menu 的 custom_id 和對應的執行方法
+            client.selectMenus.set(selectMenu.data.custom_id, selectMenu);
+            console.log(`Loaded select menu: ${selectMenu.data.custom_id}`);
+        } else {
+            console.log(`Invalid select menu file: ${file}`);
+        }
+    }
+};
+
 // 註冊斜線命令
 const registerSlashCommands = async (commands) => {
     const rest = new REST({ version: '10' }).setToken(config.token);
@@ -111,15 +135,6 @@ const getTimezoneMessage = (page) => {
     const timezonesList = timezonesOnPage.map(tz => `${tz}: ${moment.tz(tz).format('YYYY-MM-DD HH:mm:ss')}`).join('\n');
     return timezonesList;
 };
-
-const getRandomColor = () => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
 
 // 創建按鈕
 const createButtons = (page, totalPages) => {
@@ -151,11 +166,13 @@ function getClockEmoji(time) {
 
 // 初始化機器人
 client.once('ready', async () => {
-    console.log(`Logged in as ${client.user.tag}!`);
-
     // 註冊斜線命令
     const commands = loadCommands();
     await registerSlashCommands(commands);
+    await loadSelectMenus();
+    
+    console.log(`Logged in as ${client.user.tag}!`);
+    console.log('bot started successfully');
 });
 
 // 監聽交互事件
@@ -203,7 +220,7 @@ client.on('interactionCreate', async (interaction) => {
         const embed = new EmbedBuilder()
             .setTitle('世界各地的時間')
             .setDescription(`這是第 ${currentPage + 1} 頁，共 ${totalPages} 頁:`)
-            .setColor(getRandomColor());
+            .setColor(utils.getRandomColor());
     
         // 添加每個時區為單獨的欄位，並顯示當地時間與時鐘 emoji
         embed.addFields(
@@ -229,28 +246,14 @@ client.on('interactionCreate', async (interaction) => {
 
     // 處理下拉選單交互（幫助命令）
     else if (interaction.isStringSelectMenu()) {
-        if (interaction.customId !== 'help_menu') return;
+        const customId = interaction.customId;
 
-        const selectedCommand = interaction.values[0];
-
-        // 關閉選單
-        if (selectedCommand === 'close') {
-            await interaction.update({ content: 'Select menu closed', components: [] });
-            await interaction.followUp({ content: 'Select menu closed', ephemeral: true});
-            return;
-        }
-
-        // 顯示選擇的指令信息
-        const command = client.commands.get(selectedCommand);
-        if (command) {
-            const commandInfo = client.commandInfo[selectedCommand];
-            const commandEmbed = new EmbedBuilder()
-                .setTitle(`Command: ${selectedCommand}`)
-                .setDescription(commandInfo?.full || command.data.description || 'No detailed information available')
-                .setColor(getRandomColor());
-
-            await interaction.deferUpdate();
-            await interaction.followUp({ embeds: [commandEmbed], ephemeral: true });
+        // 尋找並執行對應的 selectMenu
+        const selectMenuHandler = client.selectMenus.get(customId);
+        if (selectMenuHandler) {
+            await selectMenuHandler.execute(interaction);  // 呼叫對應的執行函數
+        } else {
+            console.log(`No handler found for select menu with ID: ${customId}`);
         }
     }
 });

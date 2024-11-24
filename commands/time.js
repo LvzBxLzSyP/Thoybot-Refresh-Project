@@ -51,15 +51,6 @@ const createButtons = (page, totalPages) => {
         );
 };
 
-function getRandomColor() {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
-
 // 定義 `/time` 命令，使用 SlashCommandBuilder
 module.exports = {
     data: new SlashCommandBuilder()
