@@ -17,20 +17,20 @@ function sendErrorEmbed(client, errorTitle, errorDescription) {
 
     const errorChannel = client.channels.cache.get(config.errorChannelId);
     if (errorChannel) {
-        errorChannel.send({ embeds: [errorEmbed] }).catch(console.error);
+        errorChannel.send({ embeds: [errorEmbed] }).catch(errorWithTimestamp);
     }
 }
 
 // Capture unhandled Promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Promise Rejection:', promise, 'Reason:', reason);
+    errorWithTimestamp('Unhandled Promise Rejection:', promise, 'Reason:', reason);
     // Ensure the client object is passed
     if (global.client) sendErrorEmbed(global.client, 'Unhandled Promise Rejection', reason);
 });
 
 // Capture uncaught exceptions
 process.on('uncaughtException', (error) => {
-    console.error('Unhandled Exception:', error);
+    errorWithTimestamp('Unhandled Exception:', error);
     // Ensure the client object is passed
     if (global.client) sendErrorEmbed(global.client, 'Unhandled Exception', error.message);
 });
@@ -44,11 +44,11 @@ module.exports = {
     name: 'error',
     once: false,
     execute(error, client) {
-        console.error('Discord Client Error:', error);
+        errorWithTimestamp('Discord Client Error:', error);
         try {
             sendErrorEmbed(client, 'Bot Error', error.message);
         } catch (err) {
-            console.error('Error occurred while sending the error message:', err);
+            errorWithTimestamp('Error occurred while sending the error message:', err);
         }
     },
 };

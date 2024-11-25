@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const ping = require('ping'); // 確保已安裝 `ping` 模組
+const ping = require('ping'); // Make sure you have the `ping` module installed
 
 /**
  * The pingserver command that pings a given host and returns latency statistics.
@@ -99,7 +99,7 @@ module.exports = {
 
                 // Edit the reply with the updated embed
                 await interaction.editReply({ embeds: [embed] });
-                console.error(`Ping error on attempt ${i}:`, error);
+                errorWithTimestamp(`Ping error on attempt ${i}:`, error);
             }
         }
 

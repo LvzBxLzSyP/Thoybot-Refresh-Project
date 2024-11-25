@@ -68,7 +68,7 @@ module.exports = {
             } else if (error.code === 200000) {
                 await interaction.editReply({ content: 'Message was blocked by AutoMod. Try use command without link' });
             } else {
-                console.error(error);
+                errorWithTimestamp(error);
                 await interaction.editReply({ content: 'Error fetching guild info. Please try later!' });
             }
         }

@@ -40,7 +40,7 @@ module.exports = {
 
         } catch (error) {
             // Catch the error and log it to the console
-            console.error('Test error occurred:', error);
+            errorWithTimestamp('Test error occurred:', error);
 
             // Create an embed for the error message
             const errorEmbed = new EmbedBuilder()
@@ -53,7 +53,7 @@ module.exports = {
             // Send the error message to the configured error channel
             const errorChannel = interaction.client.channels.cache.get(config.errorChannelId);
             if (errorChannel) {
-                errorChannel.send({ embeds: [errorEmbed] }).catch(console.error);
+                errorChannel.send({ embeds: [errorEmbed] }).catch(errorWithTimestamp);
             }
 
             // Reply to the user that the error has been reported
