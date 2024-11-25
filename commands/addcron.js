@@ -103,7 +103,7 @@ Examples:
             // Send the reminder to the target channel at the specified time
             setTimeout(() => {
                 targetChannel.send(message).catch(err => {
-                    console.error('Error sending reminder:', err);
+                    errorWithTimestamp('Error sending reminder:', err);
                 });
             }, delay);
 
@@ -119,7 +119,7 @@ Examples:
 
             setTimeout(() => {
                 targetChannel.send(message).catch(err => {
-                    console.error('Error sending reminder:', err);
+                    errorWithTimestamp('Error sending reminder:', err);
                 });
             }, delay);
 

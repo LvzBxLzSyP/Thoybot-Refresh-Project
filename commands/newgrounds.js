@@ -92,8 +92,14 @@ module.exports = {
 
             } catch (error) {
                 // If an error occurs, log it and inform the user
-                console.error(error);
-                await interaction.editReply({ content: 'There was an error fetching the audio information. Please try again later.' });
+                if (error.response?.status === 404) {
+                    await interaction.editReply({ content: 'Audio not found or has been deleted.'})
+                } else if (error.response?.status === 500) {
+                    await interaction.editReply({ content: 'Internal Server Error, try again later.' })
+                } else {
+                    errorWithTimestamp(error);
+                    await interaction.editReply({ content: 'There was an error fetching the audio information. Please try again later.' });
+                }
             }
         }
     }

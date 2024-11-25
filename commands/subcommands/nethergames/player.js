@@ -71,7 +71,7 @@ module.exports = {
             if (error.response && error.response.status === 404) {
                 await interaction.editReply({ content: 'Player not found' });  // Player not found in the database
             } else {
-                console.error('Error fetching player info:', error);
+                errorWithTimestamp('Error fetching player info:', error);
                 await interaction.editReply({ content: 'Error fetching player info. Please try later!' });  // Generic error message
             }
         }

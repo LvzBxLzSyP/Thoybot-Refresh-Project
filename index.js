@@ -2,22 +2,97 @@ console.log('[Bootstrap] Starting bot');
 const appVer = '0.4.0';
 console.log(`[Bootstrap] Launching Thoybot v${appVer}`)
 
-const { Client, Collection, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, REST, Routes } = require('discord.js');
-const moment = require('moment-timezone');
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
-const config = require('./config.json');
-const { getClockEmoji, getRandomColor } = require('./utils/loadUtils.js');
+/**
+ * Checks if a required module is installed.
+ * If the module is missing, logs an error and exits the program.
+ * 
+ * @param {string} moduleName - The name of the module to check.
+ */
+function ensureModuleExists(moduleName) {
+    try {
+        require.resolve(moduleName);
+        console.log(`[Bootstrap/Module] Module '${moduleName}' is loaded successfully.`);
+    } catch {
+        console.error(`[Bootstrap/Fatal] Missing required module '${moduleName}'.`);
+        process.exit(1);
+    }
+}
+
+/**
+ * Dynamically requires a module after ensuring it exists.
+ * 
+ * @param {string} moduleName - The name of the module to require.
+ * @returns {*} - The required module.
+ */
+function safeRequire(moduleName) {
+    ensureModuleExists(moduleName);
+    return require(moduleName);
+}
+
+/**
+ * Validates that all required keys in the configuration file are present and non-empty.
+ * Logs missing or invalid keys and exits the program if any issues are found.
+ * 
+ * @param {Object} config - The configuration object loaded from config.json.
+ * @param {string} config.token - The bot token for authentication.
+ * @param {string} config.clientId - The client ID of the bot.
+ * @param {string} config.timezone - The timezone for the bot's operations.
+ */
+function checkConfigValues(config) {
+    const requiredKeys = ['token', 'clientId', 'timezone'];
+    const missingKeys = requiredKeys.filter(key => !config[key] || config[key].trim() === '');
+
+    if (missingKeys.length > 0) {
+        console.error(`[Bootstrap/Fatal] Missing or invalid config values for: ${missingKeys.join(', ')}`);
+        process.exit(1);
+    }
+}
+
+// Safely load required modules
+const discord = safeRequire('discord.js');
+const moment = safeRequire('moment-timezone');
+const fs = safeRequire('fs');
+const path = safeRequire('path');
+const readline = safeRequire('readline');
+const { getClockEmoji, getRandomColor } = safeRequire('./utils/loadUtils.js');
+
+// Load configuration file
+let config;
+try {
+    config = require('./config.json');
+    console.log("[Bootstrap/Config] Config file 'config.json' loaded successfully.");
+} catch (error) {
+    console.error('[Bootstrap/Fatal] Missing or invalid config.json file.');
+    process.exit(1);
+}
+
+// Validate configuration values
+checkConfigValues(config);
+
+// Import specific parts of modules after ensuring they exist
+console.log('[Bootstrap] Setting discord.js');
+const { Client, Collection, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, REST, Routes } = discord;
+console.log('[Bootstrap] Successfully set discord');
+
+console.log(`[Bootstrap] Timezone: ${config.timezone}`);
 
 const ITEMS_PER_PAGE = 25; // 每頁顯示25個時區
+console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
 
+
+console.log('[Bootstrap] Initializing client');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+console.log('[Bootstrap] Initialized client');
+
+console.log('[Bootstrap] Initializing readline');
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     prompt: '> '
 });
+console.log('[Bootstrap] Initialized readline');
+
+console.log('[Bootstrap] Setting up basic output functions');
 const formatTimestamp = () => {
   // 使用config.timezone取得指定時區
   const now = moment().tz(config.timezone);  // 轉換為指定時區時間
@@ -43,7 +118,9 @@ const infoWithTimestamp = (message) => {
   const timestamp = formatTimestamp();
   console.info(`${timestamp} ${message}`);
 };
+console.log('[Bootstrap] Basic output function setting successfully');
 
+console.log('[Bootstrap] Globalize variables');
 global.client = client;
 global.appVer = appVer;
 global.getRandomColor = getRandomColor;
@@ -52,13 +129,18 @@ global.logWithTimestamp = logWithTimestamp;
 global.infoWithTimestamp = infoWithTimestamp;
 global.warnWithTimestamp = warnWithTimestamp;
 global.errorWithTimestamp = errorWithTimestamp;
+console.log('[Bootstrap] Global variables set successfully');
 
+console.log('[Bootstrap] Set variables');
 client.commands = new Collection();
 client.buttons = new Collection();
 client.selectMenus = new Collection();
 client.commandInfo = {}; // 用來存儲每個命令的info
+console.log('[Bootstrap] All variables are set successfully');
 
+console.log('[Bootstrap] Setting command function');
 const loadCommands = () => {
+    logWithTimestamp('[INFO/Command] Starting load commands');
     if (!client.commands) client.commands = new Map();
     if (!client.commandInfo) client.commandInfo = {};
 
@@ -87,7 +169,6 @@ const loadCommands = () => {
 
             // 遞歸載入子命令
             if (command.subcommands) {
-                logWithTimestamp(`[INFO/Subcommand] Loading subcommands for ${command.data.name}`);
                 loadSubcommands(command.subcommands, command.data);
             }
 
@@ -106,17 +187,22 @@ const loadCommands = () => {
 
     // 顯示加載的命令數量
     logWithTimestamp(`[INFO/Command] Total commands loaded: ${loadedCommandCount}`);
+    logWithTimestamp('[INFO/Command] All commands loaded');
 
     return commands;
 };
 
 // Loading subcommands
 const loadSubcommands = (subcommands, parentCommandData) => {
+
+    logWithTimestamp('[INFO/Subcommand] Starting load subcommands');
     // Ensure the parent command has the method `addSubcommand`
     if (!parentCommandData.addSubcommand) {
         errorWithTimestamp(`[ERROR/Subcommand] Parent command '${parentCommandData.name}' does not have the method 'addSubcommand'. Skipping subcommands.`);
         return;
     }
+    
+    logWithTimestamp(`[INFO/Subcommand] Loading subcommands for ${parentCommandData.name}`);
 
     // Initialize a counter for the number of loaded subcommands
     let loadedSubcommandsCount = 0;
@@ -164,9 +250,13 @@ const loadSubcommands = (subcommands, parentCommandData) => {
     const subcommandWord = loadedSubcommandsCount === 1 ? 'subcommand' : 'subcommands';
     logWithTimestamp(`[INFO/Subcommand] Loaded ${loadedSubcommandsCount} ${subcommandWord} for ${parentCommandData.name}`);
 };
+console.log('[Bootstrap] Command function set successfully');
 
+console.log('[Bootstrap] Setting button function');
 const loadButtons = () => {
     const buttonFiles = fs.readdirSync(path.join(__dirname, 'buttons')).filter(file => file.endsWith('.js'));
+    
+    logWithTimestamp('[INFO/Button] Starting load buttons');
 
     for (const file of buttonFiles) {
         const button = require(path.join(__dirname, 'buttons', file));
@@ -182,14 +272,19 @@ const loadButtons = () => {
             warnWithTimestamp(`[Warn/Button] Invalid button file: ${file}`);
         }
     }
+    logWithTimestamp('[INFO/Button] Loaded all buttons');
 };
+console.log('[Bootstrap] Button function set successfully');
 
+console.log('[Bootstrap] Setting menu function');
 const loadSelectMenus = () => {
     const selectMenuPath = path.join(__dirname, 'selectmenu'); // 取得 selectmenu 目錄的路徑
 
     // 讀取目錄下所有以 .js 結尾的文件
     const selectMenuFiles = fs.readdirSync(selectMenuPath).filter(file => file.endsWith('.js'));
-
+    
+    logWithTimestamp('[INFO/SelectMenu] Starting load select menus')
+    
     // 遍歷每個 select menu 文件
     for (const file of selectMenuFiles) {
         const filePath = path.join(selectMenuPath, file);  // 取得文件的完整路徑
@@ -203,9 +298,14 @@ const loadSelectMenus = () => {
             warnWithTimestamp(`[WARN/SelectMenu] Invalid select menu file: ${file}`);
         }
     }
+    logWithTimestamp('[INFO/SelectMenu] Loaded all select menus');
 };
+console.log('[Bootstrap] Menu function set successfully');
 
+console.log('[Bootstrap] Setting readline function');
 const loadReadlineCommands = () => {
+    logWithTimestamp('[INFO/Readline] Starting load readline command');
+    
     const readlineCommands = {};
 
     try {
@@ -217,21 +317,25 @@ const loadReadlineCommands = () => {
                     const command = require(path.join(__dirname, 'console', file));
                     if (command.name) {
                         readlineCommands[command.name] = command;
+                        logWithTimestamp(`[INFO/Readline] Loaded command ${command.name}`);
                     } else {
-                        warnWithTimestamp(`Warning: Command in ${file} does not have a 'name' property.`);
+                        warnWithTimestamp(`[WARN/Readline] Command in ${file} does not have a 'name' property.`);
                     }
                 } catch (err) {
-                    errorWithTimestamp(`Error loading command from ${file}:`, err);
+                    errorWithTimestamp(`[ERROR/Readline] Error loading command from ${file}:`, err);
                 }
             }
         });
     } catch (err) {
-        errorWithTimestamp('Error reading commands directory:', err);
+        errorWithTimestamp('[ERROR/Readline] Error reading commands directory:', err);
     }
 
+    logWithTimestamp('[INFO/Readline] Loaded all commands');
     return readlineCommands;
 };
+console.log('[Bootstrap] Readline function set successfully');
 
+console.log('[Bootstrap] Setting register command function');
 // 註冊斜線命令
 const registerSlashCommands = async (commands) => {
     const rest = new REST({ version: '10' }).setToken(config.token);
@@ -244,8 +348,10 @@ const registerSlashCommands = async (commands) => {
         errorWithTimestamp('[ERROR/Command] Failed to register slash commands:', error);
     }
 };
+console.log('[Bootstrap] Register command function set successfully');
 
 // 計算時區訊息
+console.log('[Bootstrap] Settings other functions');
 const getTimezoneMessage = (page) => {
     const timezones = moment.tz.names();
     const ITEMS_PER_PAGE = 25;
@@ -256,10 +362,10 @@ const getTimezoneMessage = (page) => {
     const timezonesList = timezonesOnPage.map(tz => `${tz}: ${moment.tz(tz).format('YYYY-MM-DD HH:mm:ss')}`).join('\n');
     return timezonesList;
 };
-
-console.log('[Bootstrap] Bootstrap End');
+console.log('[Bootstrap] Other functions set successfully');
 
 // 初始化機器人
+console.log(`[Bootstrap] Initializing bot event 'ready'`);
 client.once('ready', async () => {
     // 註冊斜線命令
     const commands = loadCommands();
@@ -271,7 +377,9 @@ client.once('ready', async () => {
     logWithTimestamp('[INFO/Bot] bot started successfully');
     rl.prompt();
 });
+console.log(`[Bootstrap] Initialized bot event 'ready'`);
 
+console.log(`[Bootstrap] Initializing bot event 'interactionCreate'`);
 // 監聽交互事件
 client.on('interactionCreate', async (interaction) => {
     // 處理斜線命令
@@ -286,7 +394,7 @@ client.on('interactionCreate', async (interaction) => {
             errorWithTimestamp(error);
     
             // 如果已經回應過互動，則使用 editReply() 來處理錯誤消息
-            if (interaction.replied) {
+            if (interaction.replied || interaction.deferred) {
                 await interaction.editReply({ content: '發生錯誤，請稍後再試！', ephemeral: true });
             } else {
                 // 否則，回應新的錯誤消息
@@ -299,7 +407,7 @@ client.on('interactionCreate', async (interaction) => {
         const button = client.buttons.get(baseId);
         
         if (!button) {
-            warnWithTimestamp(`No handler found for button ID: ${interaction.customId}`);
+            warnWithTimestamp(`[WARN/Button] No handler found for button ID: ${interaction.customId}`);
             return;
         }
         
@@ -313,12 +421,14 @@ client.on('interactionCreate', async (interaction) => {
         if (selectMenuHandler) {
             await selectMenuHandler.execute(interaction);  // 呼叫對應的執行函數
         } else {
-            warnWithTimestamp(`No handler found for select menu with ID: ${customId}`);
+            warnWithTimestamp(`[WARN/SelectMenu]No handler found for select menu with ID: ${customId}`);
         }
     }
 });
+console.log(`[Bootstrap] Initialized bot event 'interactionCreate'`);
 
 // 登入機器人
+console.log('[Bootstrap] Bootstrap End, logging bot');
 client.login(config.token);
 
 // 加載事件處理器
@@ -349,7 +459,7 @@ rl.on('line', (input) => {
             errorWithTimestamp(`Error executing command: ${input}`, err);
         }
     } else {
-        logWithTimestamp(`Unknown command: ${input}`);
+        logWithTimestamp(`[INFO/Readline] Unknown command: ${input}`);
     }
 
     rl.prompt();
@@ -357,6 +467,6 @@ rl.on('line', (input) => {
 
 // 監聽 readline 介面關閉事件
 rl.on('close', () => {
-  logWithTimestamp('Program is closed');
+  logWithTimestamp('[INFO/Client] Bot exiting');
   process.exit(0); // 退出程序
 });
