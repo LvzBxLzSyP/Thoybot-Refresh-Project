@@ -76,7 +76,7 @@ console.log('[Bootstrap] Successfully set discord');
 
 console.log(`[Bootstrap] Timezone: ${config.timezone}`);
 
-const ITEMS_PER_PAGE = config.tzperpages; // 每頁顯示25個時區
+const ITEMS_PER_PAGE = config.tzperpages; // set timezones per pages
 console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
 
 
