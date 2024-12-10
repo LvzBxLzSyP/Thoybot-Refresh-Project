@@ -23,14 +23,14 @@ function sendErrorEmbed(client, errorTitle, errorDescription) {
 
 // Capture unhandled Promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-    errorWithTimestamp('Unhandled Promise Rejection:', promise, 'Reason:', reason);
+    errorWithTimestamp('[Rejected] Unhandled Promise Rejection:', promise, 'Reason:', reason);
     // Ensure the client object is passed
     if (global.client) sendErrorEmbed(global.client, 'Unhandled Promise Rejection', reason);
 });
 
 // Capture uncaught exceptions
 process.on('uncaughtException', (error) => {
-    errorWithTimestamp('Unhandled Exception:', error);
+    errorWithTimestamp('[Expection] Unhandled Exception:', error);
     // Ensure the client object is passed
     if (global.client) sendErrorEmbed(global.client, 'Unhandled Exception', error.message);
 });
@@ -44,7 +44,7 @@ module.exports = {
     name: 'error',
     once: false,
     execute(error, client) {
-        errorWithTimestamp('Discord Client Error:', error);
+        errorWithTimestamp('[Client] Discord Client Error:', error);
         try {
             sendErrorEmbed(client, 'Bot Error', error.message);
         } catch (err) {
