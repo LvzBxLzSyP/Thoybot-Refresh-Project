@@ -1,5 +1,5 @@
 console.log('[Bootstrap] Starting bot');
-const appVer = '0.4.0';
+const appVer = '0.5.0';
 console.log(`[Bootstrap] Launching Thoybot v${appVer}`)
 
 /**
