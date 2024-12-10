@@ -21,7 +21,7 @@ module.exports = {
         let retryCount = 0; // Initial retry count
 
         client.on('disconnect', () => {
-            logWithTimestamp('Bot disconnected, attempting to reconnect in 10 seconds...');
+            logWithTimestamp('[Client] Bot disconnected, attempting to reconnect in 10 seconds...');
 
             /**
              * Recursive function to attempt reconnection.
@@ -38,10 +38,9 @@ module.exports = {
                             })
                             .catch((err) => {
                                 retryCount++; // Increment the retry count
-                                errorWithTimestamp(`Reconnection failed (Attempt ${retryCount}):`, err);
+                                errorWithTimestamp(`[Client] Reconnection failed (Attempt ${retryCount}):`, err);
                                 if (retryCount >= MAX_RETRIES) {
-                                    errorWithTimestamp('Max retries reached, exiting the program...');
-                                    process.exit(1); // Exit after exceeding the maximum retry attempts
+                                    fatalWithTimestamp('[Client] Max retries reached, exiting the program...');
                                 } else {
                                     reconnect(); // Continue attempting to reconnect
                                 }
