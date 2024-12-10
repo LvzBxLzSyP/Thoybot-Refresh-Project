@@ -4,5 +4,6 @@
     "errorChannelId": "YOUR_ERROR_LOG_CHANNEL_ID",
     "ngmcApiKey": "YOUR_NETHERGAMES_API_KEY",
     "ownerId": "YOUR_USER_ID",
-    "timezone": "YOUR_TIME_ZONE"
+    "timezone": "YOUR_TIME_ZONE",
+    "tzperpages": 25 // default: 25
 }

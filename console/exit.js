@@ -11,7 +11,7 @@ module.exports = {
      * @returns {Promise<void>}
      */
     execute(rl, client) {
-        logWithTimestamp('[INFO/Bot] Closing bot'); // Log the timestamp when the bot is being closed
+        logWithTimestamp('[Bot] Closing bot'); // Log the timestamp when the bot is being closed
         client.destroy(); // Stop the Discord bot and disconnect from Discord
         rl.close(); // Close the readline interface
     }

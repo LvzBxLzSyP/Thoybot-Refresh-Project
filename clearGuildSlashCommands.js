@@ -1,10 +1,10 @@
 const { REST, Routes } = require('discord.js');
 const config = require('./config.json');
 
-// 從命令列參數讀取 guildId
-const guildId = process.argv[2]; // 第三個參數應為 guildId
+// Read guildId from command line parameters
+const guildId = process.argv[2]; // The third parameter should be guildId
 if (!guildId) {
-    console.error('請提供 guildId 作為命令列參數，例如：node clearGuildCommands.js <guildId>');
+    console.error('Please provide guildId as command line parameter, for example: node clearGuildCommands.js <guildId>');
     process.exit(1);
 }
 
