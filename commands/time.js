@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
-const moment = require('moment-timezone');
+const { DateTime } = require('luxon');
 
 const ITEMS_PER_PAGE = 25; // Number of timezones per page
 
@@ -9,18 +9,19 @@ const ITEMS_PER_PAGE = 25; // Number of timezones per page
  * @returns {Array<Object>} An array of objects representing the timezones and their formatted times.
  */
 const getTimezoneFields = (page) => {
-    const timezones = moment.tz.names();
+    // Retrieve timezone names using Luxon
+    const timezones = Intl.supportedValuesOf('timeZone');
     const startIndex = page * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     const timezonesOnPage = timezones.slice(startIndex, endIndex);
 
     // Create fields for each timezone
     return timezonesOnPage.map(tz => {
-        const time = moment.tz(tz);
+        const time = DateTime.now().setZone(tz);
         const emoji = global.getClockEmoji(time); // Use the global getClockEmoji function
         return {
             name: `${tz}`, // Show the timezone
-            value: time.format(`${emoji} YYYY-MM-DD HH:mm:ss`),
+            value: time.toFormat(`${emoji} yyyy-MM-dd HH:mm:ss`),
             inline: false, // Make sure each field is displayed in a separate line
         };
     });
@@ -87,7 +88,8 @@ module.exports = {
         // Defer the reply to avoid Unknown Interaction error
         await interaction.deferReply({ ephemeral });
 
-        const timezones = moment.tz.names();
+        // Retrieve timezone names using Luxon/Intl
+        const timezones = Intl.supportedValuesOf('timeZone');
 
         // If a timezone is specified, show the time for that timezone
         if (specifiedTimezone) {
@@ -97,11 +99,11 @@ module.exports = {
                 });
             }
 
-            const timeInSpecifiedZone = moment.tz(specifiedTimezone);
+            const timeInSpecifiedZone = DateTime.now().setZone(specifiedTimezone);
             const emoji = global.getClockEmoji(timeInSpecifiedZone); // Get the clock emoji for the specified timezone
             const embed = new EmbedBuilder()
                 .setTitle(`Timezone: ${specifiedTimezone}`)
-                .setDescription(`Current time: ${emoji} ${timeInSpecifiedZone.format('YYYY-MM-DD HH:mm:ss')}`)
+                .setDescription(`Current time: ${emoji} ${timeInSpecifiedZone.toFormat('yyyy-MM-dd HH:mm:ss')}`)
                 .setColor(getRandomColor());
 
             return interaction.editReply({ embeds: [embed] });
