@@ -1,23 +1,50 @@
 /**
- * Generates the corresponding clock emoji based on the given time.
+ * Generates a detailed clock emoji representation based on the given time.
  * 
- * This function takes a time object with methods `.hours()` and `.minutes()`, calculates the corresponding time
- * on a 12-hour clock format, and returns the matching clock emoji.
+ * This function provides a precise clock emoji matching the input time, 
+ * with support for half-hour increments. It uses the Luxon DateTime object 
+ * to extract hour and minute information.
  * 
- * @param {Object} time - The time object that must support `.hours()` and `.minutes()` methods.
- * @param {function} time.hours - A function that returns the hour in 24-hour format (0-23).
- * @param {function} time.minutes - A function that returns the minute (0-59).
- * @returns {string} The corresponding clock emoji.
+ * @example
+ * // Returns '🕒' for 1:25 PM
+ * const time = DateTime.now().set({ hour: 13, minute: 25 });
+ * const emoji = getClockEmoji(time);
+ * 
+ * @param {DateTime} time - The Luxon DateTime object representing the current time.
+ * @returns {string} A clock emoji precisely representing the time.
+ * 
+ * @description
+ * - Uses a 24-emoji array to represent times from 12:00 AM to 11:30 PM
+ * - Differentiates between exact hours and half-hour marks
+ * - Converts 24-hour time to 12-hour clock emoji representation
+ * 
+ * @throws {TypeError} Throws an error if the input is not a valid Luxon DateTime object
+ * 
+ * @see {@link https://moment.github.io/luxon/|Luxon Documentation}
  */
 function getClockEmoji(time) {
+    // Validate input
+    if (!time || typeof time.hour !== 'number' || typeof time.minute !== 'number') {
+        throw new TypeError('Input must be a valid Luxon DateTime object');
+    }
+
+    // Clock emoji array representing times from 12:00 to 11:30
     const clockEmojis = [
         '🕛', '🕧', '🕐', '🕜', '🕑', '🕝', '🕒', '🕞', '🕓', '🕟', '🕔', '🕠',
         '🕕', '🕡', '🕖', '🕢', '🕗', '🕣', '🕘', '🕤', '🕙', '🕥', '🕚', '🕦'
     ];
-    const hour = time.hours() % 12; // Convert to 12-hour format
-    const halfHour = time.minutes() >= 30 ? 1 : 0; // Check if it's past half an hour
-    const emojiIndex = hour * 2 + halfHour; // Calculate the emoji index
-    return clockEmojis[emojiIndex]; // Return the corresponding clock emoji
+
+    // Convert 24-hour time to 12-hour format
+    const hour = time.hour % 12; 
+    
+    // Determine if time is past the half-hour mark
+    const halfHour = time.minute >= 30 ? 1 : 0; 
+    
+    // Calculate the precise emoji index
+    const emojiIndex = hour * 2 + halfHour;
+    
+    // Return the corresponding clock emoji
+    return clockEmojis[emojiIndex];
 }
 
 module.exports = { getClockEmoji };

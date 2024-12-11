@@ -54,7 +54,7 @@ function checkConfigValues(config) {
 
 // Safely load required modules
 const discord = safeRequire('discord.js');
-const moment = safeRequire('moment-timezone');
+const luxon = safeRequire('luxon');
 const fs = safeRequire('fs');
 const path = safeRequire('path');
 const readline = safeRequire('readline');
@@ -75,10 +75,39 @@ try {
 // Validate configuration values
 checkConfigValues(config);
 
+/**
+ * Log level mapping table, which maps different environments to different log levels.
+ * @type {Object<string, string>}
+ * @property {string} development - Corresponds to the log level 'debug' for the development environment.
+ * @property {string} production - Corresponds to the log level 'warn' for the production environment.
+ * @property {string} test - Corresponds to the log level 'error' for the test environment.
+ */
+const levelMapping = {
+    development: 'debug',
+    production: 'warn',
+    test: 'error'
+};
+
+/**
+ * Logic to determine the log level.
+ * The log level is determined based on the configuration value (`config.logLevel`),
+ * the environment variable (`process.env.NODE_ENV`), and a default value.
+ * 
+ * @type {string} The log level, which can be one of the following values:
+ * 'silly', 'input', 'verbose', 'prompt', 'debug',
+ * 'info', 'data', 'help', 'warn', 'error', 'fatal', or the default value 'info'.
+ */
+const logLevel =
+    config.logLevel ||
+    levelMapping[process.env.NODE_ENV] || // Maps `NODE_ENV` value to a log level
+    'info';
+    
+
 // Import specific parts of modules after ensuring they exist
-console.log('[Bootstrap] Setting discord.js');
+console.log('[Bootstrap] Setting packages');
 const { Client, Collection, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, REST, Routes } = discord;
-console.log('[Bootstrap] Successfully set discord');
+const { DateTime } = luxon;
+console.log('[Bootstrap] Successfully set packages');
 
 console.log(`[Bootstrap] Timezone: ${config.timezone}`);
 
@@ -113,7 +142,7 @@ const customLevels = {
     fatal: 0
 };
 
-// 自定義顏色
+// Custom color
 const customColors = {
     silly: 'grey',
     input: 'grey',
@@ -130,7 +159,7 @@ const customColors = {
 
 // Timestamp formatting function
 const formatTimestamp = (tz = config.timezone || 'UTC') => {
-    return moment().tz(tz).format('YYYY-MM-DD HH:mm:ss.SSS');
+    return DateTime.now().setZone(tz).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
 };
 
 // Custom log format
@@ -149,10 +178,10 @@ const logFormat = winston.format.combine(
 
 winston.addColors(customColors); // Register a custom color
 
-// 創建 Logger
+// Create Logger
 const logger = winston.createLogger({
     levels: customLevels,
-    level: 'silly', // Preset captures all levels
+    level: logLevel, // Preset captures all levels
     format: winston.format.combine(
         winston.format((info) => {
             info.timestamp = formatTimestamp();  // Add timestamp
@@ -163,7 +192,7 @@ const logger = winston.createLogger({
     transports: [
         // Console output (color)
         new winston.transports.Console({
-            level: 'silly',  // Console shows all levels
+            level: logLevel,  // Console shows all levels
             format: winston.format.combine(
                 logFormat,
                 winston.format.timestamp()
@@ -210,6 +239,8 @@ const logger = winston.createLogger({
 // Add special handling for fatal errors
 logger.on('fatal', (message) => {
     console.error(`FATAL ERROR: ${message}`);
+    rl.close();
+    client.destroy();
     process.exit(1);
 });
 
@@ -288,12 +319,12 @@ const loadCommands = () => {
             }
             
             if (command.enabled === false) {
-                infoWithTimestamp(`[Command] Command '${command.data.name}' is disabled, skipping.`);
+                warnWithTimestamp(`[Command] Command '${command.data.name}' is disabled, skipping.`);
                 continue;
             }
 
             // Output the message loaded by the current command
-            logWithTimestamp(`[Command] Loaded command: ${command.data.name}`);
+            debugWithTimestamp(`[Command] Loaded command: ${command.data.name}`);
             loadedCommandCount++; // Each time a command is loaded, increment the count
 
             // Recursively load subcommands
@@ -349,7 +380,7 @@ const loadSubcommands = (subcommands, parentCommandData) => {
 
             // If the subcommand is disabled, it is skipped.
             if (subcommand.enabled === false) {
-                infoWithTimestamp(`[Subcommand] Subcommand '${fullCommandName}' is disabled, skipping.`);
+                warnWithTimestamp(`[Subcommand] Subcommand '${fullCommandName}' is disabled, skipping.`);
                 continue;
             }
 
@@ -357,7 +388,7 @@ const loadSubcommands = (subcommands, parentCommandData) => {
             parentCommandData.addSubcommand(subcommand.data);
 
             // Output information about successful subcommand loading
-            logWithTimestamp(`[Subcommand] Loaded subcommand: ${fullCommandName}`);
+            debugWithTimestamp(`[Subcommand] Loaded subcommand: ${fullCommandName}`);
 
             // If there is additional information, it can be stored
             if (subcommand.info) {
@@ -396,7 +427,7 @@ const loadButtons = () => {
             } else {
                 client.buttons.set(button.customId, button);
             }
-            logWithTimestamp(`[Button] Loaded button: ${button.customId}`);
+            debugWithTimestamp(`[Button] Loaded button: ${button.customId}`);
         } else {
             warnWithTimestamp(`[Warn/Button] Invalid button file: ${file}`);
         }
@@ -422,7 +453,7 @@ const loadSelectMenus = () => {
         if (selectMenu.data && selectMenu.execute) {
             // Register the custom_id and corresponding execution method of each select menu
             client.selectMenus.set(selectMenu.data.custom_id, selectMenu);
-            logWithTimestamp(`[SelectMenu] Loaded select menu: ${selectMenu.data.custom_id}`);
+            debugWithTimestamp(`[SelectMenu] Loaded select menu: ${selectMenu.data.custom_id}`);
         } else {
             warnWithTimestamp(`[WARN/SelectMenu] Invalid select menu file: ${file}`);
         }
@@ -446,7 +477,7 @@ const loadReadlineCommands = () => {
                     const command = require(path.join(__dirname, 'console', file));
                     if (command.name) {
                         readlineCommands[command.name] = command;
-                        logWithTimestamp(`[Readline] Loaded command ${command.name}`);
+                        debugWithTimestamp(`[Readline] Loaded command ${command.name}`);
                     } else {
                         warnWithTimestamp(`[WARN/Readline] Command in ${file} does not have a 'name' property.`);
                     }
@@ -478,20 +509,6 @@ const registerSlashCommands = async (commands) => {
     }
 };
 console.log('[Bootstrap] Register command function set successfully');
-
-// Calculate time zone information
-console.log('[Bootstrap] Settings other functions');
-const getTimezoneMessage = (page) => {
-    const timezones = moment.tz.names();
-    const ITEMS_PER_PAGE = 25;
-    const startIndex = page * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    const timezonesOnPage = timezones.slice(startIndex, endIndex);
-
-    const timezonesList = timezonesOnPage.map(tz => `${tz}: ${moment.tz(tz).format('YYYY-MM-DD HH:mm:ss')}`).join('\n');
-    return timezonesList;
-};
-console.log('[Bootstrap] Other functions set successfully');
 
 // Initialize the robot
 console.log(`[Bootstrap] Initializing bot event 'ready'`);
@@ -569,10 +586,10 @@ const loadEvents = () => {
 
         if (event.once) {
             client.once(event.name, (...args) => event.execute(...args, client));
-            logWithTimestamp(`[Event] Loaded once event ${event.name}`);
+            debugWithTimestamp(`[Event] Loaded once event ${event.name}`);
         } else {
             client.on(event.name, (...args) => event.execute(...args, client));
-            logWithTimestamp(`[Event] Loaded on event ${event.name}`);
+            debugWithTimestamp(`[Event] Loaded on event ${event.name}`);
         }
     }
 };
