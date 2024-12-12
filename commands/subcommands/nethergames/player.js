@@ -1,6 +1,5 @@
 const { EmbedBuilder, SlashCommandSubcommandBuilder } = require('discord.js');
 const { get } = require('axios');
-const config = require('../../../config.json');
 
 // Headers for making API requests to NGMC
 const headers = {

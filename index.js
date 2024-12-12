@@ -60,6 +60,7 @@ const path = safeRequire('path');
 const readline = safeRequire('readline');
 const winston = safeRequire('winston');
 const DailyRotateFile = safeRequire('winston-daily-rotate-file');
+const JSON5 = safeRequire('json5');
 const { getClockEmoji, getRandomColor } = safeRequire('./utils/loadUtils.js');
 
 // Load configuration file
@@ -69,6 +70,7 @@ try {
     console.log("[Bootstrap/Config] Config file 'config.json' loaded successfully.");
 } catch (error) {
     console.error('[Bootstrap/Fatal] Missing or invalid config.json file.');
+    console.error(`[Bootstrap/Fatal] Error info:${error}`);
     process.exit(1);
 }
 
@@ -275,6 +277,7 @@ console.log('[Bootstrap] Basic output function setting successfully');
 console.log('[Bootstrap] Globalize variables');
 global.client = client;
 global.appVer = appVer;
+global.config = config;
 global.getRandomColor = getRandomColor;
 global.getClockEmoji = getClockEmoji;
 global.logWithTimestamp = logWithTimestamp;
@@ -314,7 +317,7 @@ const loadCommands = () => {
 
             // Make sure the command is structured correctly
             if (!command || !command.data || !command.data.name || !command.execute) {
-                warnWithTimestamp(`Warning: Command file ${file} is missing 'data' or 'name' or 'execute'. Skipping this file.`);
+                warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data' or 'name' or 'execute'. Skipping this file.`);
                 continue;
             }
             
@@ -341,7 +344,7 @@ const loadCommands = () => {
             }
 
         } catch (error) {
-            errorWithTimestamp(`Error loading command file ${file}:`, error);
+            errorWithTimestamp(`[Command] Error loading command file ${file}: ${error}`);
         }
     }
 
@@ -402,7 +405,7 @@ const loadSubcommands = (subcommands, parentCommandData) => {
             loadedSubcommandsCount++;
 
         } catch (error) {
-            errorWithTimestamp(`[ERROR/Subcommand] Error loading subcommand '${fullCommandName}':`, error);
+            errorWithTimestamp(`[ERROR/Subcommand] Error loading subcommand '${fullCommandName}': ${error}`);
         }
     }
 
@@ -419,19 +422,24 @@ const loadButtons = () => {
     logWithTimestamp('[Button] Starting load buttons');
 
     for (const file of buttonFiles) {
-        const button = require(path.join(__dirname, 'buttons', file));
-        if (button.customId && button.execute) {
-            if (Array.isArray(button.customId)) {
-                // If there are multiple customIds, register them separately
-                button.customId.forEach(id => client.buttons.set(id, button));
+        try {
+            const button = require(path.join(__dirname, 'buttons', file));
+            if (button.customId && button.execute) {
+                if (Array.isArray(button.customId)) {
+                    // If there are multiple customIds, register them separately
+                    button.customId.forEach(id => client.buttons.set(id, button));
+                } else {
+                    client.buttons.set(button.customId, button);
+                }
+                debugWithTimestamp(`[Button] Loaded button: ${button.customId}`);
             } else {
-                client.buttons.set(button.customId, button);
+                warnWithTimestamp(`[Button] Invalid button file: ${file}`);
             }
-            debugWithTimestamp(`[Button] Loaded button: ${button.customId}`);
-        } else {
-            warnWithTimestamp(`[Warn/Button] Invalid button file: ${file}`);
+        } catch (error) {
+            errorWithTimestamp(`[Button] Failed to load button file ${file}: ${error}`);
         }
     }
+
     logWithTimestamp('[Button] Loaded all buttons');
 };
 console.log('[Bootstrap] Button function set successfully');
@@ -448,16 +456,22 @@ const loadSelectMenus = () => {
     // Traverse each select menu file
     for (const file of selectMenuFiles) {
         const filePath = path.join(selectMenuPath, file);  // Get the full path of the file
-        const selectMenu = require(filePath);  // Dynamically loading modules
 
-        if (selectMenu.data && selectMenu.execute) {
-            // Register the custom_id and corresponding execution method of each select menu
-            client.selectMenus.set(selectMenu.data.custom_id, selectMenu);
-            debugWithTimestamp(`[SelectMenu] Loaded select menu: ${selectMenu.data.custom_id}`);
-        } else {
-            warnWithTimestamp(`[WARN/SelectMenu] Invalid select menu file: ${file}`);
+        try {
+            const selectMenu = require(filePath);  // Dynamically loading modules
+
+            if (selectMenu.data && selectMenu.execute) {
+                // Register the custom_id and corresponding execution method of each select menu
+                client.selectMenus.set(selectMenu.data.custom_id, selectMenu);
+                debugWithTimestamp(`[SelectMenu] Loaded select menu: ${selectMenu.data.custom_id}`);
+            } else {
+                warnWithTimestamp(`[SelectMenu] Invalid select menu file: ${file}`);
+            }
+        } catch (error) {
+            errorWithTimestamp(`[SelectMenu] Failed to load select menu file ${file}: ${error}`);
         }
     }
+
     logWithTimestamp('[SelectMenu] Loaded all select menus');
 };
 console.log('[Bootstrap] Menu function set successfully');
@@ -479,10 +493,10 @@ const loadReadlineCommands = () => {
                         readlineCommands[command.name] = command;
                         debugWithTimestamp(`[Readline] Loaded command ${command.name}`);
                     } else {
-                        warnWithTimestamp(`[WARN/Readline] Command in ${file} does not have a 'name' property.`);
+                        warnWithTimestamp(`[Readline] Command in ${file} does not have a 'name' property.`);
                     }
                 } catch (err) {
-                    errorWithTimestamp(`[ERROR/Readline] Error loading command from ${file}:`, err);
+                    errorWithTimestamp(`[Readline] Error loading command from ${file}: ${err}`);
                 }
             }
         });
@@ -505,7 +519,7 @@ const registerSlashCommands = async (commands) => {
         await rest.put(Routes.applicationCommands(config.clientId), { body: commands });
         logWithTimestamp('[Command] Successfully reloaded application (/) commands.');
     } catch (error) {
-        errorWithTimestamp('[ERROR/Command] Failed to register slash commands:', error);
+        errorWithTimestamp('[Command] Failed to register slash commands:', error);
     }
 };
 console.log('[Bootstrap] Register command function set successfully');
@@ -553,7 +567,7 @@ client.on('interactionCreate', async (interaction) => {
         const button = client.buttons.get(baseId);
         
         if (!button) {
-            warnWithTimestamp(`[WARN/Button] No handler found for button ID: ${interaction.customId}`);
+            warnWithTimestamp(`[Button] No handler found for button ID: ${interaction.customId}`);
             return;
         }
         
@@ -567,7 +581,7 @@ client.on('interactionCreate', async (interaction) => {
         if (selectMenuHandler) {
             await selectMenuHandler.execute(interaction);  // Call the corresponding execution function
         } else {
-            warnWithTimestamp(`[WARN/SelectMenu]No handler found for select menu with ID: ${customId}`);
+            warnWithTimestamp(`[SelectMenu]No handler found for select menu with ID: ${customId}`);
         }
     }
 });
@@ -580,18 +594,25 @@ client.login(config.token);
 // Load event handler
 const loadEvents = () => {
     const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+    logWithTimestamp('[Event] Starting load events');
 
     for (const file of eventFiles) {
-        const event = require(`./events/${file}`);
+        try {
+            const event = require(`./events/${file}`);
 
-        if (event.once) {
-            client.once(event.name, (...args) => event.execute(...args, client));
-            debugWithTimestamp(`[Event] Loaded once event ${event.name}`);
-        } else {
-            client.on(event.name, (...args) => event.execute(...args, client));
-            debugWithTimestamp(`[Event] Loaded on event ${event.name}`);
+            if (event.once) {
+                client.once(event.name, (...args) => event.execute(...args, client));
+                debugWithTimestamp(`[Event] Loaded once event ${event.name}`);
+            } else {
+                client.on(event.name, (...args) => event.execute(...args, client));
+                debugWithTimestamp(`[Event] Loaded on event ${event.name}`);
+            }
+        } catch (error) {
+            errorWithTimestamp(`[Event] Failed to load event file ${file}: ${error}`);
         }
     }
+
+    logWithTimestamp('[Event] Finished loading all events');
 };
 loadEvents();
 

@@ -6,7 +6,6 @@
  * 
  * @module events/disconnect
  */
-const { token } = require('../config.json');
 
 module.exports = {
     name: 'disconnect', // Event name

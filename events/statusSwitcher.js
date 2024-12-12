@@ -39,7 +39,7 @@ module.exports = {
       const timeString = formatTimeString(timeInTimeZone, name, timeZone);
 
       // Get the appropriate clock emoji based on the time
-      const clockEmoji = getClockEmoji(timeInTimeZone); // 假设这是全局函数
+      const clockEmoji = getClockEmoji(timeInTimeZone);
 
       // Update the bot's activity status
       client.user.setActivity(`${clockEmoji} ${timeString}`, { type: ActivityType.Custom });
