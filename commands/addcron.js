@@ -2,9 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const { DateTime } = require('luxon');
 const fs = require('fs');
 const path = require('path');
-
 // Read configuration from config.json to get the default timezone
-const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../config.json'), 'utf8'));
 const defaultTimezone = config.timezone || 'Asia/Taipei'; // Default timezone is set to 'Asia/Taipei' if not provided
 
 /**
