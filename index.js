@@ -66,7 +66,7 @@ const { getClockEmoji, getRandomColor } = safeRequire('./utils/loadUtils.js');
 // Load configuration file
 let config;
 try {
-    config = require('./config.json');
+    config = require('./jsons/config.json');
     console.log("[Bootstrap/Config] Config file 'config.json' loaded successfully.");
 } catch (error) {
     console.error('[Bootstrap/Fatal] Missing or invalid config.json file.');

@@ -10,17 +10,20 @@ const ITEMS_PER_PAGE = 25; // Number of timezones per page
  */
 const getTimezoneFields = (page) => {
     // Retrieve timezone names using Luxon
-    const timezones = Intl.supportedValuesOf('timeZone');
+    const timezones = require('../jsons/timezones.json');
+    const tzCodes = timezones.map(item => item.tzCode);
+    const tzNameMap = Object.fromEntries(timezones.map(tz => [tz.tzCode, tz.name]));
     const startIndex = page * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    const timezonesOnPage = timezones.slice(startIndex, endIndex);
+    const timezonesOnPage = tzCodes.slice(startIndex, endIndex);
 
     // Create fields for each timezone
     return timezonesOnPage.map(tz => {
         const time = DateTime.now().setZone(tz);
+        const tzName = tzNameMap[tz] || 'Unknown Timezone'; //Find the corresponding tzNames. If it does not exist, 'Unknown Timezone' will be displayed.
         const emoji = global.getClockEmoji(time); // Use the global getClockEmoji function
         return {
-            name: `${tz}`, // Show the timezone
+            name: `${tzName}`, // Show the timezone
             value: time.toFormat(`${emoji} yyyy-MM-dd HH:mm:ss`),
             inline: false, // Make sure each field is displayed in a separate line
         };
