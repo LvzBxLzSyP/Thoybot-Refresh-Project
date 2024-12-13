@@ -107,7 +107,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, REST, Routes } = discord;
+const { Client, Collection, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, SlashCommandBuilder, ButtonStyle, REST, Routes } = discord;
 const { DateTime } = luxon;
 console.log('[Bootstrap] Successfully set packages');
 
@@ -303,42 +303,66 @@ console.log('[Bootstrap] All variables are set successfully');
 
 console.log('[Bootstrap] Setting command function');
 const loadCommands = () => {
-    logWithTimestamp('[Command] Starting load commands');
-    if (!client.commands) client.commands = new Map();
+    logWithTimestamp('[Command] Starting to load commands');
+    
+    if (!client.commands) client.commands = new Collection();
     if (!client.commandInfo) client.commandInfo = {};
 
     const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
     const commands = [];
-    let loadedCommandCount = 0; // Record the number of commands loaded
+    let loadedCommandCount = 0; // Track the number of commands loaded
+
+    const isValidCommand = (command, file) => {
+        if (!command.data || !command.execute) {
+            warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data' or 'execute'. Skipping.`);
+            return false;
+        }
+        if (command.enabled === false) {
+            warnWithTimestamp(`[Command] Command '${command.data.name}' is disabled, skipping.`);
+            return false;
+        }
+        return true;
+    };
 
     for (const file of commandFiles) {
         try {
             const command = require(path.join(__dirname, 'commands', file));
 
-            // Make sure the command is structured correctly
-            if (!command || !command.data || !command.data.name || !command.execute) {
-                warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data' or 'name' or 'execute'. Skipping this file.`);
-                continue;
-            }
-            
-            if (command.enabled === false) {
-                warnWithTimestamp(`[Command] Command '${command.data.name}' is disabled, skipping.`);
-                continue;
+            // Handle legacy format by assigning 'data' from 'name' if necessary
+            if (!command.data) {
+                if (command.name) {
+                    command.data = { name: command.name };
+                } else {
+                    warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data' or 'name'. Skipping.`);
+                    continue;
+                }
             }
 
-            // Output the message loaded by the current command
+            // Validate the command format
+            if (!isValidCommand(command, file)) continue;
+
+            // If using SlashCommandBuilder format, ensure it is valid
+            if (command.data instanceof SlashCommandBuilder) {
+                if (!command.data.name || !command.execute) {
+                    warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data.name' or 'execute'. Skipping.`);
+                    continue;
+                }
+            }
+
+            // Log the successfully loaded command
             debugWithTimestamp(`[Command] Loaded command: ${command.data.name}`);
-            loadedCommandCount++; // Each time a command is loaded, increment the count
+            loadedCommandCount++;
 
-            // Recursively load subcommands
+            // Load subcommands if they exist
             if (command.subcommands) {
                 loadSubcommands(command.subcommands, command.data);
             }
 
-            // Add command to collection
+            // Add the command to the collection
             client.commands.set(command.data.name, command);
-            commands.push(command.data.toJSON());
+            commands.push(command.data.toJSON ? command.data.toJSON() : command.data);
 
+            // Store additional command info
             if (command.info) {
                 client.commandInfo[command.data.name] = command.info;
             }
@@ -348,7 +372,7 @@ const loadCommands = () => {
         }
     }
 
-    // Display the number of loaded commands
+    // Log the total number of commands loaded
     logWithTimestamp(`[Command] Total commands loaded: ${loadedCommandCount}`);
     logWithTimestamp('[Command] All commands loaded');
 
