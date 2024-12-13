@@ -17,7 +17,9 @@
   "description": "Thoybot refresh project",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "editcfg": "sh tools/startEditor.sh",
+    "initcfg": "cp jsons/config.example.json jsons/config.json && sh tools/startEditor.sh"
   },
   "keywords": [
     "discord",

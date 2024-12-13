@@ -18,8 +18,10 @@ module.exports = {
         // Get the page number from the button's customId, assuming customId is 'time_previous_1' or 'time_next_2'
         const pageNumber = interaction.customId.split('_')[1]; // Extract the dynamic part (page number)
         const ITEMS_PER_PAGE = 25; // Number of timezones per page
-        const timezones = Intl.supportedValuesOf('timeZone'); // Retrieve all timezone names using Luxon
-        const totalPages = Math.ceil(timezones.length / ITEMS_PER_PAGE); // Calculate total number of pages
+        const timezones = require('../jsons/timezones.json');
+        const tzCodes = timezones.map(item => item.tzCode);
+        const tzNameMap = Object.fromEntries(timezones.map(tz => [tz.tzCode, tz.name]));
+        const totalPages = Math.ceil(tzCodes.length / ITEMS_PER_PAGE); // Calculate total number of pages
         
         await interaction.deferUpdate(); // Defer the interaction update to prevent button spam
 
@@ -39,12 +41,13 @@ module.exports = {
 
         // Display the timezones for the current page
         embed.addFields(
-            timezones
+            tzCodes
                 .slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE) // Slice the timezones based on the current page
                 .map(tz => {
                     const time = DateTime.now().setZone(tz); // Get the time for each timezone using Luxon
+                    const tzName = tzNameMap[tz] || 'Unknown Timezone'; // 查找對應的 tzNames，若不存在則顯示 'Unknown Timezone'
                     return {
-                        name: `${tz}`, // Display the timezone name
+                        name: `${tzName}`, // Display the timezone name
                         value: `${getClockEmoji(time)} ${time.toFormat('yyyy-MM-dd HH:mm:ss')}`, // Show the current time with a clock emoji
                         inline: false, // Don't display timezone info inline
                     };
