@@ -17,11 +17,10 @@ module.exports = {
     async execute(interaction, client) {
         // Get the page number from the button's customId, assuming customId is 'time_previous_1' or 'time_next_2'
         const pageNumber = interaction.customId.split('_')[1]; // Extract the dynamic part (page number)
-        const ITEMS_PER_PAGE = 25; // Number of timezones per page
         const timezones = require('../jsons/timezones.json');
-        const tzCodes = timezones.map(item => item.tzCode);
-        const tzNameMap = Object.fromEntries(timezones.map(tz => [tz.tzCode, tz.name]));
-        const totalPages = Math.ceil(tzCodes.length / ITEMS_PER_PAGE); // Calculate total number of pages
+        const tzCodes = timezones.map(item => item.utc); // Get an array of all first UTC values
+        const tzNameMap = Object.fromEntries(timezones.map(tz => [tz.utc, tz.text])); // Create a correspondence table between text and utc
+        const totalPages = Math.ceil(timezones.length / ITEMS_PER_PAGE); // Calculate total number of pages
         
         await interaction.deferUpdate(); // Defer the interaction update to prevent button spam
 
