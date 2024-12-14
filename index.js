@@ -568,8 +568,8 @@ function logMemoryUsage() {
   const memoryUsage = process.memoryUsage();
   const formattedUsage1 = `RSS: ${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB, Heap Total: ${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB,`;
   const formattedUsage2 = `Heap Used: ${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB, External: ${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`
-  debugWithTimestamp(`Memory Usage:${formattedUsage1}`);
-  debugWithTimestamp(`${formattedUsage2}`);
+  debugWithTimestamp(`[Memory] Usage: ${formattedUsage1}`);
+  debugWithTimestamp(`[Memory] Usage: ${formattedUsage2}`);
 }
 
 // Execute every 5 minutes (300000 milliseconds)
