@@ -551,6 +551,22 @@ const registerSlashCommands = async (commands) => {
 };
 console.log('[Bootstrap] Register command function set successfully');
 
+// Set other functions
+// Function that prints memory usage
+function logMemoryUsage() {
+  const memoryUsage = process.memoryUsage();
+  const formattedUsage = `
+    RSS: ${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB,
+    Heap Total: ${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB,
+    Heap Used: ${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB,
+    External: ${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB
+  `;
+  debugWithTimestamp(`Memory Usage:\n${formattedUsage}`);
+}
+
+// Execute every 5 minutes (300000 milliseconds)
+setInterval(logMemoryUsage, 300000);
+
 // Initialize the robot
 console.log(`[Bootstrap] Initializing bot event 'ready'`);
 client.once('ready', async () => {
@@ -562,6 +578,7 @@ client.once('ready', async () => {
     
     logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
     logWithTimestamp('[Bot] bot started successfully');
+    logMemoryUsage();
     rl.prompt();
 });
 console.log(`[Bootstrap] Initialized bot event 'ready'`);
@@ -578,7 +595,7 @@ client.on('interactionCreate', async (interaction) => {
         try {
             await command.execute(interaction);
         } catch (error) {
-            errorWithTimestamp(error);
+            errorWithTimestamp(`[Command] An error occurred: ${error}`);
     
             // If the interaction has already been responded to, use editReply() to handle the error message
             if (interaction.replied || interaction.deferred) {
