@@ -103,7 +103,6 @@ const logLevel =
     config.logLevel ||
     levelMapping[process.env.NODE_ENV] || // Maps `NODE_ENV` value to a log level
     'info';
-    
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
@@ -115,7 +114,6 @@ console.log(`[Bootstrap] Timezone: ${config.timezone}`);
 
 const ITEMS_PER_PAGE = config.tzPerPages; // set timezones per pages
 console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
-
 
 console.log('[Bootstrap] Initializing client');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -303,6 +301,10 @@ client.commandInfo = {}; // Used to store info for each command
 console.log('[Bootstrap] All variables are set successfully');
 
 console.log('[Bootstrap] Setting command function');
+/**
+ * Load all commands from commands
+ * @returns {*[]} - Commands array
+ */
 const loadCommands = () => {
     logWithTimestamp('[Command] Starting to load commands');
     
@@ -382,6 +384,11 @@ const loadCommands = () => {
     return commands;
 };
 
+/**
+ * If parent command has subcommands then load it
+ * @param subcommands - command.subcommand[]
+ * @param parentCommandData - command
+ */
 // Loading subcommands
 const loadSubcommands = (subcommands, parentCommandData) => {
 
@@ -537,7 +544,11 @@ const loadReadlineCommands = () => {
 console.log('[Bootstrap] Readline function set successfully');
 
 console.log('[Bootstrap] Setting register command function');
-// Register slash command
+/**
+ * Register slash command
+ * @param commands - Commands arrays
+ * @returns {Promise<void>}
+ */
 const registerSlashCommands = async (commands) => {
     const rest = new REST({ version: '10' }).setToken(config.token);
 
@@ -555,13 +566,10 @@ console.log('[Bootstrap] Register command function set successfully');
 // Function that prints memory usage
 function logMemoryUsage() {
   const memoryUsage = process.memoryUsage();
-  const formattedUsage = `
-    RSS: ${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB,
-    Heap Total: ${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB,
-    Heap Used: ${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB,
-    External: ${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB
-  `;
-  debugWithTimestamp(`Memory Usage:\n${formattedUsage}`);
+  const formattedUsage1 = `RSS: ${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB, Heap Total: ${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB,`;
+  const formattedUsage2 = `Heap Used: ${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB, External: ${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`
+  debugWithTimestamp(`Memory Usage:${formattedUsage1}`);
+  debugWithTimestamp(`${formattedUsage2}`);
 }
 
 // Execute every 5 minutes (300000 milliseconds)
