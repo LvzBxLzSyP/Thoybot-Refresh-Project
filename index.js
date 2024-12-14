@@ -1,6 +1,6 @@
 console.log('[Bootstrap] Starting bot');
 const appVer = '0.5.0';
-console.log(`[Bootstrap] Launching Thoybot v${appVer}`)
+console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
 
 /**
  * Checks if a required module is installed.
@@ -43,7 +43,7 @@ function safeRequire(moduleName) {
  * @throws {Error} Will throw an error and terminate the process if any required values are missing or invalid.
  */
 function checkConfigValues(config) {
-    const requiredKeys = ['token', 'clientId', 'timezone'];
+    const requiredKeys = ['token', 'clientId', 'timezone', 'tzPerPages'];
     const missingKeys = requiredKeys.filter(key => !config[key] || (typeof config[key] === 'string' && config[key].trim() === ''));
 
     if (missingKeys.length > 0) {
@@ -66,7 +66,7 @@ const { getClockEmoji, getRandomColor } = safeRequire('./utils/loadUtils.js');
 // Load configuration file
 let config;
 try {
-    config = require('./jsons/config.json');
+    config = JSON5.parse(fs.readFileSync('./jsons/config.json', 'utf8'));
     console.log("[Bootstrap/Config] Config file 'config.json' loaded successfully.");
 } catch (error) {
     console.error('[Bootstrap/Fatal] Missing or invalid config.json file.');
@@ -113,7 +113,7 @@ console.log('[Bootstrap] Successfully set packages');
 
 console.log(`[Bootstrap] Timezone: ${config.timezone}`);
 
-const ITEMS_PER_PAGE = config.tzperpages; // set timezones per pages
+const ITEMS_PER_PAGE = config.tzPerPages; // set timezones per pages
 console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
 
 
@@ -278,6 +278,7 @@ console.log('[Bootstrap] Globalize variables');
 global.client = client;
 global.appVer = appVer;
 global.config = config;
+global.ITEMS_PER_PAGE = ITEMS_PER_PAGE;
 global.getRandomColor = getRandomColor;
 global.getClockEmoji = getClockEmoji;
 global.logWithTimestamp = logWithTimestamp;
@@ -371,6 +372,8 @@ const loadCommands = () => {
             errorWithTimestamp(`[Command] Error loading command file ${file}: ${error}`);
         }
     }
+    
+    verboseWithTimestamp(`[VariableTest] \nclient.commandInfo = ${JSON.stringify(client.commandInfo, null, 2)}`);
 
     // Log the total number of commands loaded
     logWithTimestamp(`[Command] Total commands loaded: ${loadedCommandCount}`);
@@ -579,10 +582,10 @@ client.on('interactionCreate', async (interaction) => {
     
             // If the interaction has already been responded to, use editReply() to handle the error message
             if (interaction.replied || interaction.deferred) {
-                await interaction.editReply({ content: '發生錯誤，請稍後再試！', ephemeral: true });
+                await interaction.editReply({ content: 'An error occurred, please try again later!', ephemeral: true });
             } else {
                 // Otherwise, respond with a new error message
-                await interaction.reply({ content: '發生錯誤，請稍後再試！', ephemeral: true });
+                await interaction.reply({ content: 'An error occurred, please try again later!', ephemeral: true });
             }
         }
     } else if (interaction.isButton()) {

@@ -1,18 +1,16 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
 const { DateTime } = require('luxon');
 
-const ITEMS_PER_PAGE = 25; // Number of timezones per page
-
 /**
  * Generate fields for the timezones to be displayed in the embed.
  * @param {number} page - The page number to display.
  * @returns {Array<Object>} An array of objects representing the timezones and their formatted times.
  */
 const getTimezoneFields = (page) => {
-    // Retrieve timezone names using Luxon
+    // Retrieve timezone names using custom JSON
     const timezones = require('../jsons/timezones.json');
-    const tzCodes = timezones.map(item => item.tzCode);
-    const tzNameMap = Object.fromEntries(timezones.map(tz => [tz.tzCode, tz.name]));
+    const tzCodes = timezones.map(item => item.utc); // Get an array of all first UTC values
+    const tzNameMap = Object.fromEntries(timezones.map(tz => [tz.utc, tz.text])); // Create a correspondence table between text and utc
     const startIndex = page * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     const timezonesOnPage = tzCodes.slice(startIndex, endIndex);
@@ -90,12 +88,10 @@ module.exports = {
 
         // Defer the reply to avoid Unknown Interaction error
         await interaction.deferReply({ ephemeral });
-
-        // Retrieve timezone names using Luxon/Intl
-        const timezones = Intl.supportedValuesOf('timeZone');
-
+        
         // If a timezone is specified, show the time for that timezone
         if (specifiedTimezone) {
+            const timezones = require('../jsons/tzCode.json');
             if (!timezones.includes(specifiedTimezone)) {
                 return interaction.editReply({
                     content: `Invalid timezone name: \`${specifiedTimezone}\`. Please enter a valid timezone!`,
@@ -111,7 +107,9 @@ module.exports = {
 
             return interaction.editReply({ embeds: [embed] });
         }
-
+        
+        const timezones = require('../jsons/timezones.json');
+        
         // If no timezone is specified, show the first page of timezones
         const totalPages = Math.ceil(timezones.length / ITEMS_PER_PAGE);
         const currentPage = 0;
