@@ -106,7 +106,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, SlashCommandBuilder, ButtonStyle, REST, Routes } = discord;
+const { Client, Collection, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = discord;
 const { DateTime } = luxon;
 console.log('[Bootstrap] Successfully set packages');
 
