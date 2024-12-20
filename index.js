@@ -560,7 +560,7 @@ const registerSlashCommands = async (commands) => {
         errorWithTimestamp('[Command] Failed to register slash commands:', error);
     }
 };
-console.log('[Bootstrap] Register command function set successfully');
+// console.log('[Bootstrap] Register command function set successfully');
 
 // Set other functions
 // Function that prints memory usage
