@@ -25,7 +25,7 @@ fs.readdirSync(utilsPath)
       : utilModule;
 
     // Log the loaded utility module name
-    console.log(`[Bootstrap/Utils] Loaded utility: ${utilName}`);
+    // console.log(`[Bootstrap/Utils] Loaded utility: ${utilName}`);
   });
 
 /**
@@ -46,7 +46,7 @@ module.exports = (function() {
       if (utils[key]) {
         selectedUtils[key] = utils[key];
         // Only log the utilities that are destructured
-        console.log(`[Bootstrap/Utils] Loaded utility: ${key}`);
+        // console.log(`[Bootstrap/Utils] Loaded utility: ${key}`);
       }
     });
 
