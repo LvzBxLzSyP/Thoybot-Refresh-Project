@@ -2,17 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { SlashCommandBuilder } = require('discord.js');
 
-// 假設這兩個函數是用來紀錄日誌的工具
-function logWithTimestamp(message) {
-    console.log(`[${new Date().toISOString()}] ${message}`);
-}
-
-function warnWithTimestamp(message) {
-    console.warn(`[${new Date().toISOString()}] ${message}`);
-}
-
 module.exports = {
-    // 定義 Slash 命令的資料
+    // Data that defines the Slash command
     data: new SlashCommandBuilder()
         .setName('reload')
         .setDescription('Reload a specific command.')
@@ -22,49 +13,49 @@ module.exports = {
                 .setRequired(true)
         ),
 
-    // 處理命令執行邏輯
+    // Handle command execution logic
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
-        // 檢查使用者是否為管理員 (檢查 ownerId)
+        // Check if the user is an administrator (check ownerId)
         if (interaction.user.id !== config.ownerId) {
             return interaction.editReply({ content: 'You do not have permission to reload commands!' });
         }
 
-        // 取得要重新加載的命令名稱
+        // Get the name of the command to be reloaded   
         const commandName = interaction.options.getString('command');
         const commandPath = path.join(__dirname, '../commands', `${commandName}.js`);
 
-        // 檢查命令是否存在
+        // Check if the command exists
         if (!fs.existsSync(commandPath)) {
             return interaction.editReply({ content: `Command ${commandName} not found.`, ephemeral: true });
         }
 
-        // 日誌：紀錄誰在重新加載命令
+        // Log: record who is reloading the command
         warnWithTimestamp(`[Command] Command ${commandName} is being reloaded by ${interaction.user.username} using reload command`);
 
         try {
-            // 刪除舊的命令模組緩存
+            // Delete old command module cache
             delete require.cache[require.resolve(commandPath)];
 
-            // 重新加載指定命令
+            // Reload the specified command
             const command = require(commandPath);
 
-            // 更新 client.commands
+            // Update client.commands
             interaction.client.commands.set(command.data.name, command);
 
-            // 如果命令包含 info，將其插入到 client.commandInfo
+            // If the command contains info, insert it into client.commandInfo
             if (command.info) {
                 interaction.client.commandInfo[command.data.name] = command.info;
             }
 
-            // 日誌：重新加載成功
+            // Log: Reload successful
             logWithTimestamp(`[Command] Command ${commandName} was successfully reloaded`);
 
-            // 返回成功的回應
+            // Return a successful response
             return interaction.editReply({ content: `Command ${commandName} has been reloaded successfully!` });
         } catch (error) {
-            // 捕捉錯誤並回應
+            // Catching errors and responding
             console.error(error);
             return interaction.editReply({ content: `An error occurred while reloading the command: ${error.message}`, ephemeral: true });
         }
