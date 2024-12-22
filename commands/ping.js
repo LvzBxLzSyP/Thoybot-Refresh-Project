@@ -22,7 +22,7 @@ module.exports = {
      */
     info: {
         short: 'Delay in returning the bot', // Short description 
-        full: `Returns the robot's websocket delay, which can be retested using the button
+        full: `Returns the bot's websocket delay, which can be retested using the button
         Command usage syntax:
         \`/ping\``
     },
@@ -45,7 +45,7 @@ module.exports = {
             .setTitle('Ping message') // Title of the embed
             .setDescription(`The delay is ${interaction.client.ws.ping}ms`); // Display the bot's ping (websocket latency)
 
-        // 創建重新 Ping 按鈕 (Create a button to refresh the ping)
+        // Create a button to refresh the ping
         const button = new ButtonBuilder()
             .setCustomId('ping_button') // Custom ID for the button to identify it
             .setLabel('Re-Ping') // Button label in Chinese
