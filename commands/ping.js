@@ -13,7 +13,7 @@ module.exports = {
      */
     data: new SlashCommandBuilder()
         .setName('ping')
-        .setDescription('返回機器人的延遲') // Command description in Chinese (Bot's latency)
+        .setDescription('Delay in returning robot') // Command description
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),
 
@@ -21,9 +21,9 @@ module.exports = {
      * Command information including a short and full description.
      */
     info: {
-        short: '返回機器人的延遲', // Short description in Chinese
-        full: `返回機器人的websocket延遲，可使用按鈕重新測試
-        命令使用語法:
+        short: 'Delay in returning the bot', // Short description 
+        full: `Returns the robot's websocket delay, which can be retested using the button
+        Command usage syntax:
         \`/ping\``
     },
 
@@ -39,16 +39,16 @@ module.exports = {
      * @returns {Promise<void>} 
      */
     async execute(interaction) {
-        // 使用隨機顏色初始化 Ping 值 (Set up the ping message with a random color)
+        // Initialize Ping values with random colors    
         const pingEmbed = new EmbedBuilder()
             .setColor(getRandomColor()) // Set a random color for the embed
-            .setTitle('Ping 訊息') // Title of the embed
-            .setDescription(`延遲為 ${interaction.client.ws.ping}ms`); // Display the bot's ping (websocket latency)
+            .setTitle('Ping message') // Title of the embed
+            .setDescription(`The delay is ${interaction.client.ws.ping}ms`); // Display the bot's ping (websocket latency)
 
         // 創建重新 Ping 按鈕 (Create a button to refresh the ping)
         const button = new ButtonBuilder()
             .setCustomId('ping_button') // Custom ID for the button to identify it
-            .setLabel('重新 Ping') // Button label in Chinese
+            .setLabel('Re-Ping') // Button label in Chinese
             .setStyle(ButtonStyle.Primary); // Style the button as primary (blue)
 
         // Create a row to hold the button
