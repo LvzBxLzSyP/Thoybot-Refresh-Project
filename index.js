@@ -601,7 +601,8 @@ client.once(Events.ClientReady,
         logWithTimestamp('[Bot] bot started successfully');
         logMemoryUsage();
         rl.prompt();
-    });
+    }
+);
 // console.log(`[Bootstrap] Initialized bot event 'ready'`);
 
 // console.log(`[Bootstrap] Initializing bot event 'interactionCreate'`);
