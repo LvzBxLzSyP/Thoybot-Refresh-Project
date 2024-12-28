@@ -106,7 +106,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 // console.log('[Bootstrap] Setting packages');
-const { Client, Collection, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = discord;
+const { Client, Collection, Events, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = discord;
 const { DateTime } = luxon;
 // console.log('[Bootstrap] Successfully set packages');
 
@@ -577,66 +577,93 @@ setInterval(logMemoryUsage, 300000);
 
 // Initialize the robot
 // console.log(`[Bootstrap] Initializing bot event 'ready'`);
-client.once('ready', async () => {
-    // Register slash command
-    const commands = loadCommands();
-    loadButtons();
-    loadSelectMenus();
-    await registerSlashCommands(commands);
-    
-    logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
-    logWithTimestamp('[Bot] bot started successfully');
-    logMemoryUsage();
-    rl.prompt();
-});
+client.once(Events.ClientReady, 
+    /**
+     * Event handler for the `ready` event, triggered once when the client is fully ready.
+     * 
+     * This function performs the following actions:
+     * - Loads and registers slash commands with Discord.
+     * - Loads button and select menu interaction handlers.
+     * - Logs the bot's login status, startup confirmation, and memory usage.
+     * - Starts a Readline prompt for console input.
+     * 
+     * @event ready
+     * @returns {Promise<void>} A promise that resolves when the bot's initialization is complete.
+     */
+    async () => {
+        // Register slash command
+        const commands = loadCommands();
+        loadButtons();
+        loadSelectMenus();
+        await registerSlashCommands(commands);
+        
+        logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
+        logWithTimestamp('[Bot] bot started successfully');
+        logMemoryUsage();
+        rl.prompt();
+    });
 // console.log(`[Bootstrap] Initialized bot event 'ready'`);
 
 // console.log(`[Bootstrap] Initializing bot event 'interactionCreate'`);
 // Listen for interaction events
-client.on('interactionCreate', async (interaction) => {
-    // Handling slash commands
-    if (interaction.isChatInputCommand()) {
-        const command = client.commands.get(interaction.commandName);
-
-        if (!command) return;
+client.on(Events.InteractionCreate, 
+    /**
+     * Event handler for Discord's `interactionCreate` event.
+     * This function processes different types of interactions: slash commands, buttons, and string select menus.
+     * 
+     * - **Slash Commands:** Executes the corresponding command logic based on the command name.
+     * - **Buttons:** Parses the button's custom ID and triggers the corresponding handler.
+     * - **String Select Menus:** Identifies the custom ID and invokes the appropriate select menu handler.
+     * 
+     * @param {import('discord.js').Interaction} interaction - The interaction object triggered by a user action.
+     * 
+     * @returns {Promise<void>} A promise that resolves when the interaction is successfully handled.
+     */
+    async (interaction) => {
+        // Handling slash commands
+        if (interaction.isChatInputCommand()) {
+            const command = client.commands.get(interaction.commandName);
     
-        try {
-            await command.execute(interaction);
-        } catch (error) {
-            errorWithTimestamp(`[Command] An error occurred: ${error}`);
+            if (!command) return;
+        
+            try {
+                await command.execute(interaction);
+            } catch (error) {
+                errorWithTimestamp(`[Command] An error occurred: ${error}`);
+        
+                // If the interaction has already been responded to, use editReply() to handle the error message
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.editReply({ content: 'An error occurred, please try again later!', ephemeral: true });
+                } else {
+                    // Otherwise, respond with a new error message
+                    await interaction.reply({ content: 'An error occurred, please try again later!', ephemeral: true });
+                }
+            }
+        } else if (interaction.isButton()) {
+            // Parse button base ID
+            const baseId = interaction.customId.split('_').slice(0, 2).join('_');
+            const button = client.buttons.get(baseId);
+            
+            if (!button) {
+                warnWithTimestamp(`[Button] No handler found for button ID: ${interaction.customId}`);
+                return;
+            }
+            
+            // Execute button processing logic
+            button.execute(interaction);
+        } else if (interaction.isStringSelectMenu()) {
+            const customId = interaction.customId;
     
-            // If the interaction has already been responded to, use editReply() to handle the error message
-            if (interaction.replied || interaction.deferred) {
-                await interaction.editReply({ content: 'An error occurred, please try again later!', ephemeral: true });
+            // Find and execute the corresponding selectMenu
+            const selectMenuHandler = client.selectMenus.get(customId);
+            if (selectMenuHandler) {
+                await selectMenuHandler.execute(interaction);  // Call the corresponding execution function
             } else {
-                // Otherwise, respond with a new error message
-                await interaction.reply({ content: 'An error occurred, please try again later!', ephemeral: true });
+                warnWithTimestamp(`[SelectMenu]No handler found for select menu with ID: ${customId}`);
             }
         }
-    } else if (interaction.isButton()) {
-        // Parse button base ID
-        const baseId = interaction.customId.split('_').slice(0, 2).join('_');
-        const button = client.buttons.get(baseId);
-        
-        if (!button) {
-            warnWithTimestamp(`[Button] No handler found for button ID: ${interaction.customId}`);
-            return;
-        }
-        
-        // Execute button processing logic
-        button.execute(interaction);
-    } else if (interaction.isStringSelectMenu()) {
-        const customId = interaction.customId;
-
-        // Find and execute the corresponding selectMenu
-        const selectMenuHandler = client.selectMenus.get(customId);
-        if (selectMenuHandler) {
-            await selectMenuHandler.execute(interaction);  // Call the corresponding execution function
-        } else {
-            warnWithTimestamp(`[SelectMenu]No handler found for select menu with ID: ${customId}`);
-        }
     }
-});
+);
 // console.log(`[Bootstrap] Initialized bot event 'interactionCreate'`);
 
 // Login bot
