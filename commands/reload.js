@@ -2,15 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const { SlashCommandBuilder } = require('discord.js');
 
-// 假設這兩個函數是用來紀錄日誌的工具
-function logWithTimestamp(message) {
-    console.log(`[${new Date().toISOString()}] ${message}`);
-}
-
-function warnWithTimestamp(message) {
-    console.warn(`[${new Date().toISOString()}] ${message}`);
-}
-
 module.exports = {
     // 定義 Slash 命令的資料
     data: new SlashCommandBuilder()
@@ -65,7 +56,7 @@ module.exports = {
             return interaction.editReply({ content: `Command ${commandName} has been reloaded successfully!` });
         } catch (error) {
             // 捕捉錯誤並回應
-            console.error(error);
+            errorWithTimestamp(error);
             return interaction.editReply({ content: `An error occurred while reloading the command: ${error.message}`, ephemeral: true });
         }
     }

@@ -106,7 +106,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = discord;
+const { Client, Collection, GatewayIntentBits, Partials, SlashCommandBuilder, REST, Routes } = discord;
 const { DateTime } = luxon;
 console.log('[Bootstrap] Successfully set packages');
 
@@ -116,7 +116,16 @@ const ITEMS_PER_PAGE = config.tzPerPages; // set timezones per pages
 console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
 
 console.log('[Bootstrap] Initializing client');
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ 
+    intents: [
+        GatewayIntentBits.Guilds
+    ],
+    partials: [
+        Partials.Message,
+        Partials.User,
+        Partials.Reaction
+    ]
+});
 console.log('[Bootstrap] Initialized client');
 
 console.log('[Bootstrap] Initializing readline');
@@ -176,6 +185,14 @@ const logFormat = winston.format.combine(
   })
 );
 
+const fileFormat = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.printf(({ level, message, timestamp }) => {
+  // For other levels, only the level field is colored
+  return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+  })
+);
+
 winston.addColors(customColors); // Register a custom color
 
 // Create Logger
@@ -186,8 +203,7 @@ const logger = winston.createLogger({
         winston.format((info) => {
             info.timestamp = formatTimestamp();  // Add timestamp
             return info;
-        })(),
-        logFormat
+        })()
     ),
     transports: [
         // Console output (color)
@@ -203,6 +219,10 @@ const logger = winston.createLogger({
         // Detailed logs of daily rotation (only info and higher level logs are recorded)
         new DailyRotateFile({
             level: 'info',  // Only logs at info level and above are recorded
+            format: winston.format.combine(
+                fileFormat,
+                winston.format.timestamp()
+            ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'combined-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
@@ -214,6 +234,10 @@ const logger = winston.createLogger({
         // Error log (only error and higher level logs are recorded)
         new DailyRotateFile({
             level: 'error',  // Only logs with error level and above are recorded
+            format: winston.format.combine(
+                fileFormat,
+                winston.format.timestamp()
+            ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'error-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
@@ -225,6 +249,10 @@ const logger = winston.createLogger({
         // Fatal error log (only fatal level logs are recorded)
         new DailyRotateFile({
             level: 'fatal',  // Only log fatal level logs
+            format: winston.format.combine(
+                fileFormat,
+                winston.format.timestamp()
+            ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'fatal-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
@@ -395,7 +423,7 @@ const loadSubcommands = (subcommands, parentCommandData) => {
     logWithTimestamp('[Subcommand] Starting load subcommands');
     // Ensure the parent command has the method `addSubcommand`
     if (!parentCommandData.addSubcommand) {
-        errorWithTimestamp(`[ERROR/Subcommand] Parent command '${parentCommandData.name}' does not have the method 'addSubcommand'. Skipping subcommands.`);
+        errorWithTimestamp(`[Subcommand] Parent command '${parentCommandData.name}' does not have the method 'addSubcommand'. Skipping subcommands.`);
         return;
     }
     
@@ -411,7 +439,7 @@ const loadSubcommands = (subcommands, parentCommandData) => {
         try {
             // Make sure the subcommand structure is correct
             if (!subcommand || !subcommand.data || !subcommand.data.name || !subcommand.execute) {
-                warnWithTimestamp(`[WARN/Subcommand] Warning: Subcommand '${fullCommandName}' is missing 'data' or 'name' or 'execute'. Skipping.`);
+                warnWithTimestamp(`[Subcommand] Warning: Subcommand '${fullCommandName}' is missing 'data' or 'name' or 'execute'. Skipping.`);
                 continue;
             }
 
@@ -439,7 +467,7 @@ const loadSubcommands = (subcommands, parentCommandData) => {
             loadedSubcommandsCount++;
 
         } catch (error) {
-            errorWithTimestamp(`[ERROR/Subcommand] Error loading subcommand '${fullCommandName}': ${error}`);
+            errorWithTimestamp(`[Subcommand] Error loading subcommand '${fullCommandName}': ${error}`);
         }
     }
 
@@ -535,7 +563,7 @@ const loadReadlineCommands = () => {
             }
         });
     } catch (err) {
-        errorWithTimestamp('[ERROR/Readline] Error reading commands directory:', err);
+        errorWithTimestamp('[Readline] Error reading commands directory:', err);
     }
 
     logWithTimestamp('[Readline] Loaded all commands');
@@ -566,12 +594,17 @@ console.log('[Bootstrap] Register command function set successfully');
 // Function that prints memory usage
 function logMemoryUsage() {
   const memoryUsage = process.memoryUsage();
-  const formattedUsage1 = `RSS: ${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB, Heap Total: ${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB,`;
-  const formattedUsage2 = `Heap Used: ${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB, External: ${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`
-  debugWithTimestamp(`[Memory] Usage: ${formattedUsage1}`);
-  debugWithTimestamp(`[Memory] Usage: ${formattedUsage2}`);
-}
+  
+  // Pre-calculate each value and keep two decimal places
+  const rss = (memoryUsage.rss / 1024 / 1024).toFixed(2);       // Resident Set Size (RSS)
+  const heapTotal = (memoryUsage.heapTotal / 1024 / 1024).toFixed(2); // Total heap memory allocated
+  const heapUsed = (memoryUsage.heapUsed / 1024 / 1024).toFixed(2);   // Heap memory currently in use
+  const external = (memoryUsage.external / 1024 / 1024).toFixed(2);   // External memory used by V8
 
+  // Print memory usage details, each on a separate line for clarity
+  debugWithTimestamp(`[Memory] Usage: RSS: ${rss} MB, Heap Total: ${heapTotal} MB,`);
+  debugWithTimestamp(`[Memory] Usage: Heap Used: ${heapUsed} MB, External: ${external} MB`);
+}
 // Execute every 5 minutes (300000 milliseconds)
 setInterval(logMemoryUsage, 300000);
 

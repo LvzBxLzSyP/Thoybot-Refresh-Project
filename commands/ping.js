@@ -13,7 +13,7 @@ module.exports = {
      */
     data: new SlashCommandBuilder()
         .setName('ping')
-        .setDescription('Delay in returning robot') // Command description
+        .setDescription('Delay in returning bot') // Command description
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),
 
@@ -43,7 +43,7 @@ module.exports = {
         const pingEmbed = new EmbedBuilder()
             .setColor(getRandomColor()) // Set a random color for the embed
             .setTitle('Ping message') // Title of the embed
-            .setDescription(`The delay is ${interaction.client.ws.ping}ms`); // Display the bot's ping (websocket latency)
+            .setDescription(`The latency is ${interaction.client.ws.ping}ms`); // Display the bot's ping (websocket latency)
 
         // Create a button to refresh the ping
         const button = new ButtonBuilder()

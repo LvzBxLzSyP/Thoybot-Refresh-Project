@@ -64,7 +64,8 @@ module.exports = {
             `📝 Commands: ${client.commands?.size || 'N/A'}`,
             `📊 Memory Usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`,
             `🔧 Discord.js: v${discordVersion}`,
-            `📌 Bot Version: v${appVer}`
+            `📌 Bot Version: v${appVer}`,
+            `💻 Node.js: ${process.version}`
         ].join('\n');
 
         // Check if the command was called in a channel
