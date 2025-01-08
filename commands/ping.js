@@ -54,7 +54,7 @@ module.exports = {
         // Create a row to hold the button
         const row = new ActionRowBuilder().addComponents(button);
 
-        // 發送嵌入訊息和按鈕 (Send the embed and button as a response to the interaction)
+        // Send the embed and button as a response to the interaction
         await interaction.reply({ embeds: [pingEmbed], components: [row] });
     },
 };
