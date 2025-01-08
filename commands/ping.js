@@ -43,7 +43,7 @@ module.exports = {
         const pingEmbed = new EmbedBuilder()
             .setColor(getRandomColor()) // Set a random color for the embed
             .setTitle('Ping message') // Title of the embed
-            .setDescription(`The delay is ${interaction.client.ws.ping}ms`); // Display the bot's ping (websocket latency)
+            .setDescription(`The latency is ${interaction.client.ws.ping}ms`); // Display the bot's ping (websocket latency)
 
         // Create a button to refresh the ping
         const button = new ButtonBuilder()
@@ -54,7 +54,7 @@ module.exports = {
         // Create a row to hold the button
         const row = new ActionRowBuilder().addComponents(button);
 
-        // 發送嵌入訊息和按鈕 (Send the embed and button as a response to the interaction)
+        // Send the embed and button as a response to the interaction
         await interaction.reply({ embeds: [pingEmbed], components: [row] });
     },
 };

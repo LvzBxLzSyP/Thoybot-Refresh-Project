@@ -176,6 +176,14 @@ const logFormat = winston.format.combine(
   })
 );
 
+const fileFormat = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.printf(({ level, message, timestamp }) => {
+  // For other levels, only the level field is colored
+  return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+  })
+);
+
 winston.addColors(customColors); // Register a custom color
 
 // Create Logger
@@ -186,8 +194,7 @@ const logger = winston.createLogger({
         winston.format((info) => {
             info.timestamp = formatTimestamp();  // Add timestamp
             return info;
-        })(),
-        logFormat
+        })()
     ),
     transports: [
         // Console output (color)
@@ -203,6 +210,10 @@ const logger = winston.createLogger({
         // Detailed logs of daily rotation (only info and higher level logs are recorded)
         new DailyRotateFile({
             level: 'info',  // Only logs at info level and above are recorded
+            format: winston.format.combine(
+                fileFormat,
+                winston.format.timestamp()
+            ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'combined-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
@@ -214,6 +225,10 @@ const logger = winston.createLogger({
         // Error log (only error and higher level logs are recorded)
         new DailyRotateFile({
             level: 'error',  // Only logs with error level and above are recorded
+            format: winston.format.combine(
+                fileFormat,
+                winston.format.timestamp()
+            ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'error-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
@@ -225,6 +240,10 @@ const logger = winston.createLogger({
         // Fatal error log (only fatal level logs are recorded)
         new DailyRotateFile({
             level: 'fatal',  // Only log fatal level logs
+            format: winston.format.combine(
+                fileFormat,
+                winston.format.timestamp()
+            ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'fatal-%DATE%.log',
             datePattern: 'YYYY-MM-DD',
