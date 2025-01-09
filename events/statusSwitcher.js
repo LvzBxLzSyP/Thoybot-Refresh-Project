@@ -62,7 +62,6 @@ module.exports = {
             setTimeout(() => {
                 currentTimeZoneIndex = 0; // Reset to the first time zone
                 updateStatus(); // Update the status
-                debugWithTimestamp(`Status has been modified ${changenum}`);
                 setInterval(updateStatus, 15 * 1000); // Update the status every 15 seconds
             }, timeToNextMinute);
         }
