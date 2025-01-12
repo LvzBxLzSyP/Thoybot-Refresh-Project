@@ -23,7 +23,7 @@ Choose your language | 選擇語言 | 选择语言:
 ### Step 1: Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/Thoybot-Refresh-Project.git
+git clone https://github.com/LvzBxLzSyP/Thoybot-Refresh-Project.git
 cd Thoybot-Refresh-Project
 ```
 
