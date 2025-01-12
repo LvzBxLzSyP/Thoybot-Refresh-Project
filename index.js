@@ -629,58 +629,97 @@ client.once(Events.ClientReady,
 client.on(Events.InteractionCreate, 
     /**
      * Event handler for Discord's `interactionCreate` event.
-     * This function processes different types of interactions: slash commands, buttons, and string select menus.
+     * This function handles various types of user interactions, such as slash commands, buttons, 
+     * and string select menus, and ensures appropriate responses.
      * 
-     * - **Slash Commands:** Executes the corresponding command logic based on the command name.
-     * - **Buttons:** Parses the button's custom ID and triggers the corresponding handler.
-     * - **String Select Menus:** Identifies the custom ID and invokes the appropriate select menu handler.
+     * - **Slash Commands:** Retrieves and executes the corresponding command logic based on the command name.
+     * - **Buttons:** Identifies the button's custom ID, retrieves the handler, and executes its logic.
+     * - **String Select Menus:** Finds the handler based on the menu's custom ID and executes it.
      * 
      * @param {import('discord.js').Interaction} interaction - The interaction object triggered by a user action.
+     *    This object contains details about the type of interaction and associated data (e.g., custom ID, command name).
      * 
-     * @returns {Promise<void>} A promise that resolves when the interaction is successfully handled.
+     * @returns {Promise<void>} A promise that resolves after successfully handling the interaction or logs an error.
      */
     async (interaction) => {
         // Handling slash commands
         if (interaction.isChatInputCommand()) {
+            /**
+             * Retrieve the command handler from the `client.commands` collection using the command name.
+             * This collection is expected to be a `Collection` where keys are command names, and values are the corresponding handler objects.
+             */
             const command = client.commands.get(interaction.commandName);
     
-            if (!command) return;
+            if (!command) {
+                // No command handler found for the given command name
+                warnWithTimestamp(`[Command] No handler found for command: ${interaction.commandName}`);
+                return;
+            }
         
             try {
+                // Execute the command's main logic
                 await command.execute(interaction);
             } catch (error) {
-                errorWithTimestamp(`[Command] An error occurred: ${error}`);
+                // Log the error with a timestamp for debugging
+               errorWithTimestamp(`[Command] An error occurred while executing command: ${interaction.commandName}\n${error}`);
         
-                // If the interaction has already been responded to, use editReply() to handle the error message
+                // Handle the error response based on whether the interaction was already replied to
                 if (interaction.replied || interaction.deferred) {
+                    // If interaction already replied/deferred, use editReply to show error message
                     await interaction.editReply({ content: 'An error occurred, please try again later!', ephemeral: true });
                 } else {
-                    // Otherwise, respond with a new error message
+                    // Otherwise, send a new reply with an ephemeral error message
                     await interaction.reply({ content: 'An error occurred, please try again later!', ephemeral: true });
                 }
             }
         } else if (interaction.isButton()) {
-            // Parse button base ID
-            const baseId = interaction.customId.split('_').slice(0, 2).join('_');
-            const button = client.buttons.get(baseId);
-            
+            /**
+             * Handling button interactions.
+             * The `customId` is expected to be a string with a specific format (e.g., "action_subaction"),
+             * and this logic splits it into base parts to identify the corresponding handler.
+             */
+            const baseId = interaction.customId.split('_').slice(0, 2).join('_'); // Extract base ID from custom ID
+            const button = client.buttons.get(baseId); // Retrieve the handler for the button
+
             if (!button) {
+                // No handler found for the given button ID
                 warnWithTimestamp(`[Button] No handler found for button ID: ${interaction.customId}`);
                 return;
             }
-            
-            // Execute button processing logic
-            button.execute(interaction);
-        } else if (interaction.isStringSelectMenu()) {
-            const customId = interaction.customId;
-    
-            // Find and execute the corresponding selectMenu
-            const selectMenuHandler = client.selectMenus.get(customId);
-            if (selectMenuHandler) {
-                await selectMenuHandler.execute(interaction);  // Call the corresponding execution function
-            } else {
-                warnWithTimestamp(`[SelectMenu]No handler found for select menu with ID: ${customId}`);
+
+            try {
+                // Execute the button's logic
+                await button.execute(interaction);
+            } catch (error) {
+                // Log and handle errors specific to button interactions
+                errorWithTimestamp(`[Button] An error occurred for button ID: ${interaction.customId}\n${error}`);
+                await interaction.reply({ content: 'An error occurred while processing your action.', ephemeral: true });
             }
+        } else if (interaction.isStringSelectMenu()) {
+            /**
+             * Handling string select menu interactions.
+             * The `customId` is used to identify the specific menu and retrieve its handler.
+             */
+            const customId = interaction.customId;
+            const selectMenuHandler = client.selectMenus.get(customId); // Retrieve the handler for the select menu
+
+            if (!selectMenuHandler) {
+                // No handler found for the given select menu ID
+                warnWithTimestamp(`[SelectMenu] No handler found for select menu ID: ${customId}`);
+                return;
+            }
+
+            try {
+                // Execute the select menu's logic
+                await selectMenuHandler.execute(interaction);
+            } catch (error) {
+                // Log and handle errors specific to select menu interactions
+                errorWithTimestamp(`[SelectMenu] An error occurred for select menu ID: ${customId}\n${error}`);
+                await interaction.reply({ content: 'An error occurred while processing your selection.', ephemeral: true });
+            }
+        } else {
+            // Log a warning for unhandled interaction types
+            warnWithTimestamp(`[Interaction] Unhandled interaction type: ${interaction.type}`);
         }
     }
 );
