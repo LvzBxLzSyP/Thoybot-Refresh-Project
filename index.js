@@ -106,7 +106,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, GatewayIntentBits, Partials, SlashCommandBuilder, REST, Routes } = discord;
+const { Client, Collection, Events, GatewayIntentBits, Partials, SlashCommandBuilder, REST, Routes } = discord;
 const { DateTime } = luxon;
 console.log('[Bootstrap] Successfully set packages');
 
@@ -119,11 +119,6 @@ console.log('[Bootstrap] Initializing client');
 const client = new Client({ 
     intents: [
         GatewayIntentBits.Guilds
-    ],
-    partials: [
-        Partials.Message,
-        Partials.User,
-        Partials.Reaction
     ]
 });
 console.log('[Bootstrap] Initialized client');
