@@ -17,7 +17,7 @@
 
 ### 第一步：克隆此專案
 ```bash
-git clone https://github.com/yourusername/Thoybot-Refresh-Project.git
+git clone https://github.com/LvzBxLzSyP/Thoybot-Refresh-Project.git
 cd Thoybot-Refresh-Project
 ```
 
