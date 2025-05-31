@@ -1,4 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
+const { createButtons } = require('../utils/loadUtils');
 const { DateTime } = require('luxon');
 
 /**
@@ -34,21 +35,21 @@ const getTimezoneFields = (page) => {
  * @param {number} totalPages - The total number of pages.
  * @returns {ActionRowBuilder} A row of buttons for navigation.
  */
-const createButtons = (page, totalPages) => {
-    return new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(`time_previous_${page}`)
-                .setLabel('Previous')
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(page === 0),
-            new ButtonBuilder()
-                .setCustomId(`time_next_${page}`)
-                .setLabel('Next')
-                .setStyle(ButtonStyle.Primary)
-                .setDisabled(page === totalPages - 1)
-        );
-};
+// const createButtons = (page, totalPages) => {
+//    return new ActionRowBuilder()
+//        .addComponents(
+//            new ButtonBuilder()
+//                .setCustomId(`time_previous_${page}`)
+//                .setLabel('Previous')
+//                .setStyle(ButtonStyle.Primary)
+//                .setDisabled(page === 0),
+//            new ButtonBuilder()
+//                .setCustomId(`time_next_${page}`)
+//                .setLabel('Next')
+//                .setStyle(ButtonStyle.Primary)
+//                .setDisabled(page === totalPages - 1)
+//        );
+// };
 
 /**
  * Time command handler to show the current time in various timezones.

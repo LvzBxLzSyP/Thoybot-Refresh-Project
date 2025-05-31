@@ -60,16 +60,15 @@ const path = safeRequire('path');
 const readline = safeRequire('readline');
 const winston = safeRequire('winston');
 const DailyRotateFile = safeRequire('winston-daily-rotate-file');
-const JSON5 = safeRequire('json5');
 const { getClockEmoji, getRandomColor } = safeRequire('./utils/loadUtils.js');
 
 // Load configuration file
 let config;
 try {
-    config = JSON5.parse(fs.readFileSync('./jsons/config.json', 'utf8'));
-    console.log("[Bootstrap/Config] Config file 'config.json' loaded successfully.");
+    config = require('./configs/config')
+    console.log("[Bootstrap/Config] Config file 'config.js' loaded successfully.");
 } catch (error) {
-    console.error('[Bootstrap/Fatal] Missing or invalid config.json file.');
+    console.error('[Bootstrap/Fatal] Missing or invalid config.js file.');
     console.error(`[Bootstrap/Fatal] Error info:${error}`);
     process.exit(1);
 }
@@ -183,7 +182,6 @@ const logFormat = winston.format.combine(
 const fileFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.printf(({ level, message, timestamp }) => {
-  // For other levels, only the level field is colored
   return `${timestamp} [${level.toUpperCase()}]: ${message}`;
   })
 );
@@ -603,9 +601,30 @@ function logMemoryUsage() {
 // Execute every 5 minutes (300000 milliseconds)
 setInterval(logMemoryUsage, 300000);
 
+function getEnvironmentInfo() {
+    const env = {
+        isPM2: !!(process.env.PM2_HOME || process.env.pm_id !== undefined),
+        isSupervisor: !!process.env.SUPERVISOR_ENABLED,
+        isForever: !!process.env.FOREVER_ROOT,
+        isDocker: !!process.env.DOCKER_CONTAINER,
+        isProduction: process.env.NODE_ENV === 'production',
+        hasTTY: process.stdout.isTTY && process.stdin.isTTY,
+        manager: 'direct'
+    };
+    
+    if (env.isPM2) env.manager = 'PM2';
+    else if (env.isSupervisor) env.manager = 'Supervisor';
+    else if (env.isForever) env.manager = 'Forever';
+    else if (env.isDocker) env.manager = 'Docker';
+    
+    env.shouldEnablePrompt = env.hasTTY && !env.isPM2 && !env.isSupervisor && !env.isForever && !env.isDocker;
+    
+    return env;
+}
+
 // Initialize the robot
 console.log(`[Bootstrap] Initializing bot event 'ready'`);
-client.once('ready', async () => {
+client.once(Events.ClientReady, async () => {
     // Register slash command
     const commands = loadCommands();
     loadButtons();
@@ -615,7 +634,16 @@ client.once('ready', async () => {
     logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
     logWithTimestamp('[Bot] bot started successfully');
     logMemoryUsage();
-    rl.prompt();
+    
+    const env = getEnvironmentInfo();
+    debugWithTimestamp(`[System] Running under: ${env.manager}`);
+    
+    if (env.shouldEnablePrompt) {
+        debugWithTimestamp('[System] Interactive prompt enabled');
+        rl.prompt();
+    } else {
+        logWithTimestamp('[System] Interactive prompt disabled (managed environment)');
+    }
 });
 console.log(`[Bootstrap] Initialized bot event 'ready'`);
 
@@ -752,16 +780,24 @@ loadEvents();
 const rlcmd = loadReadlineCommands();
 
 rl.on('line', (input) => {
-    const command = rlcmd[input.trim()];
+    const trimmedInput = input.trim();
+    
+    // Skip processing if input is empty
+    if (!trimmedInput) {
+        rl.prompt();
+        return;
+    }
+    
+    const command = rlcmd[trimmedInput];
 
     if (command) {
         try {
             command.execute(rl, client); // Assuming each command has an `execute` method
         } catch (err) {
-            errorWithTimestamp(`Error executing command: ${input}`, err);
+            errorWithTimestamp(`Error executing command: ${trimmedInput}`, err);
         }
     } else {
-        errorWithTimestamp(`[Readline] Unknown command: ${input}`);
+        errorWithTimestamp(`[Readline] Unknown command: ${trimmedInput}`);
     }
 
     rl.prompt();

@@ -22,4 +22,4 @@ else
     fi
 fi
 
-$default_editor jsons/config.json
+$default_editor configs/config.json

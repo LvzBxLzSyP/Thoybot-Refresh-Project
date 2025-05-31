@@ -56,7 +56,7 @@ module.exports = {
      * Defines whether the command is enabled or not.
      * @type {boolean}
      */
-    enabled: true,
+    enabled: config.ngmcEnabled,
 
     /**
      * Executes the `/nethergames` command logic.
