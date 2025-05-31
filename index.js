@@ -179,7 +179,6 @@ const logFormat = winston.format.combine(
 const fileFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.printf(({ level, message, timestamp }) => {
-  // For other levels, only the level field is colored
   return `${timestamp} [${level.toUpperCase()}]: ${message}`;
   })
 );
@@ -757,16 +756,24 @@ loadEvents();
 const rlcmd = loadReadlineCommands();
 
 rl.on('line', (input) => {
-    const command = rlcmd[input.trim()];
+    const trimmedInput = input.trim();
+    
+    // Skip processing if input is empty
+    if (!trimmedInput) {
+        rl.prompt();
+        return;
+    }
+    
+    const command = rlcmd[trimmedInput];
 
     if (command) {
         try {
             command.execute(rl, client); // Assuming each command has an `execute` method
         } catch (err) {
-            errorWithTimestamp(`Error executing command: ${input}`, err);
+            errorWithTimestamp(`Error executing command: ${trimmedInput}`, err);
         }
     } else {
-        errorWithTimestamp(`[Readline] Unknown command: ${input}`);
+        errorWithTimestamp(`[Readline] Unknown command: ${trimmedInput}`);
     }
 
     rl.prompt();
