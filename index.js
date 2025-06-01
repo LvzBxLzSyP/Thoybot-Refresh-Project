@@ -122,14 +122,6 @@ const client = new Client({
 });
 console.log('[Bootstrap] Initialized client');
 
-console.log('[Bootstrap] Initializing readline');
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: '> '
-});
-console.log('[Bootstrap] Initialized readline');
-
 console.log('[Bootstrap] Setting up basic output functions');
 const customLevels = {
     silly: 10,
@@ -602,22 +594,36 @@ function logMemoryUsage() {
 setInterval(logMemoryUsage, 300000);
 
 function getEnvironmentInfo() {
+    // 檢測 node-supervisor
+    const isNodeSupervisor = !!(
+        process.env._ && process.env._.includes('supervisor') // 檢查啟動路徑
+    );
+    
     const env = {
         isPM2: !!(process.env.PM2_HOME || process.env.pm_id !== undefined),
-        isSupervisor: !!process.env.SUPERVISOR_ENABLED,
-        isForever: !!process.env.FOREVER_ROOT,
+        isSupervisor: isNodeSupervisor,
+        isForever: !!(process.env._ && process.env._.includes('forever')),
+        isNodemon: !!(process.env._ && process.env._.includes('nodemon')),
         isDocker: !!process.env.DOCKER_CONTAINER,
         isProduction: process.env.NODE_ENV === 'production',
-        hasTTY: process.stdout.isTTY && process.stdin.isTTY,
+        hasTTY: !!(process.stdout.isTTY && process.stdin.isTTY),
         manager: 'direct'
     };
     
-    if (env.isPM2) env.manager = 'PM2';
-    else if (env.isSupervisor) env.manager = 'Supervisor';
-    else if (env.isForever) env.manager = 'Forever';
-    else if (env.isDocker) env.manager = 'Docker';
+    // 優先級檢測
+    if (env.isPM2) {
+        env.manager = 'PM2';
+    } else if (env.isSupervisor) {
+        env.manager = 'node-supervisor';
+    } else if (env.isForever) {
+        env.manager = 'Forever';
+    } else if (env.isNodemon) {
+        env.manager = 'Nodemon';
+    } else if (env.isDocker) {
+        env.manager = 'Docker';
+    }
     
-    env.shouldEnablePrompt = env.hasTTY && !env.isPM2 && !env.isSupervisor && !env.isForever && !env.isDocker;
+    env.shouldEnablePrompt = env.hasTTY && env.manager === 'direct';
     
     return env;
 }
@@ -640,7 +646,8 @@ client.once(Events.ClientReady, async () => {
     
     if (env.shouldEnablePrompt) {
         debugWithTimestamp('[System] Interactive prompt enabled');
-        rl.prompt();
+        
+        initReadline();
     } else {
         logWithTimestamp('[System] Interactive prompt disabled (managed environment)');
     }
@@ -777,34 +784,44 @@ const loadEvents = () => {
 };
 loadEvents();
 
-const rlcmd = loadReadlineCommands();
-
-rl.on('line', (input) => {
-    const trimmedInput = input.trim();
-    
-    // Skip processing if input is empty
-    if (!trimmedInput) {
-        rl.prompt();
-        return;
-    }
-    
-    const command = rlcmd[trimmedInput];
-
-    if (command) {
-        try {
-            command.execute(rl, client); // Assuming each command has an `execute` method
-        } catch (err) {
-            errorWithTimestamp(`Error executing command: ${trimmedInput}`, err);
+function initReadline() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: '> '
+    });
+        
+    const rlcmd = loadReadlineCommands();
+        
+    rl.on('line', (input) => {
+        const trimmedInput = input.trim();
+            
+        // Skip processing if input is empty
+        if (!trimmedInput) {
+            rl.prompt();
+            return;
         }
-    } else {
-        errorWithTimestamp(`[Readline] Unknown command: ${trimmedInput}`);
-    }
-
+        
+        const command = rlcmd[trimmedInput];
+        
+        if (command) {
+            try {
+                command.execute(rl, client); // Assuming each command has an `execute` method
+            } catch (err) {
+                errorWithTimestamp(`Error executing command: ${trimmedInput}`, err);
+            }
+        } else {
+            errorWithTimestamp(`[Readline] Unknown command: ${trimmedInput}`);
+        }
+    
+        rl.prompt();
+    });
+        
+    // Listen to the readline interface closing event
+    rl.on('close', () => {
+        logWithTimestamp('[Client] Bot exiting');
+        process.exit(0); // Exit Program
+    });
+    
     rl.prompt();
-});
-
-// Listen to the readline interface closing event
-rl.on('close', () => {
-  logWithTimestamp('[Client] Bot exiting');
-  process.exit(0); // Exit Program
-});
+}
