@@ -594,9 +594,9 @@ function logMemoryUsage() {
 setInterval(logMemoryUsage, 300000);
 
 function getEnvironmentInfo() {
-    // 檢測 node-supervisor
+    // Detecting node-supervisor
     const isNodeSupervisor = !!(
-        process.env._ && process.env._.includes('supervisor') // 檢查啟動路徑
+        process.env._ && process.env._.includes('supervisor') // Check boot path
     );
     
     const env = {
@@ -610,7 +610,7 @@ function getEnvironmentInfo() {
         manager: 'direct'
     };
     
-    // 優先級檢測
+    // Priority testing
     if (env.isPM2) {
         env.manager = 'PM2';
     } else if (env.isSupervisor) {
