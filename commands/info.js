@@ -54,7 +54,14 @@ module.exports = {
     async execute(interaction) {
         const client = interaction.client;
         const uptime = formatUptime(client.uptime);
-        let infoEmbed;
+        
+        // Basic information block
+        const isUserMode = !interaction.channel;
+        const modeText = isUserMode
+            ? `🤖 Install mode: \`USER MODE\``
+            : `🤖 Install mode: \`GUILD MODE\`\n🏠 Server Name: ${interaction.guild.name}`;
+        const userText = `👤 Command User: ${interaction.user.username}`;
+        const basicInfo = `${modeText}\n${userText}`;
 
         // System information block (shared part)
         const systemInfo = [
@@ -67,46 +74,29 @@ module.exports = {
             `📌 Bot Version: v${appVer}`,
             `💻 Node.js: ${process.version}`
         ].join('\n');
-
-        // Check if the command was called in a channel
-        if (!interaction.channel) {
-            infoEmbed = new EmbedBuilder()
-                .setColor(getRandomColor())
-                .setAuthor({ 
-                    name: 'The ThoyBot Project!',
-                    iconURL: client.user.displayAvatarURL()
-                })
-                .addFields(
-                    { 
-                        name: '📌 Basic Information', 
-                        value: `🤖 Install mode: \`USER MODE\`\n👤 Command User: ${interaction.user.username}`, 
-                        inline: false 
-                    },
-                    { name: '🔧 System Information', value: systemInfo, inline: false }
-                )
-                .setThumbnail(client.user.displayAvatarURL())
-                .setTimestamp()
-                .setFooter({ text: 'Bot by thoy037' });
-        } else {
-            infoEmbed = new EmbedBuilder()
-                .setColor(getRandomColor())
-                .setAuthor({ 
-                    name: 'The ThoyBot Project!',
-                    iconURL: client.user.displayAvatarURL()
-                })
-                .addFields(
-                    { 
-                        name: '📌 Basic Information', 
-                        value: `🤖 Install mode: \`GUILD MODE\`\n🏠 Server Name: ${interaction.guild.name}\n👤 Command User: ${interaction.user.username}`, 
-                        inline: false 
-                    },
-                    { name: '🔧 System Information', value: systemInfo, inline: false }
-                )
-                .setThumbnail(client.user.displayAvatarURL())
-                .setTimestamp()
-                .setFooter({ text: 'Bot by thoy037' });
-        }
-
+        
+        const infoEmbed = new EmbedBuilder()
+            .setColor(getRandomColor())
+            .setAuthor({
+                name: 'The ThoyBot Project!',
+                iconURL: client.user.displayAvatarURL()
+            })
+            .addFields(
+                {
+                    name: '📌 Basic Information',
+                    value: basicInfo,
+                    inline: false
+                },
+                {
+                    name: '🔧 System Information',
+                    value: systemInfo,
+                    inline: false
+                }
+            )
+            .setThumbnail(client.user.displayAvatarURL())
+            .setTimestamp()
+            .setFooter({ text: 'Bot by thoy037' });
+        
         // Send the reply with the embed
         await interaction.reply({ embeds: [infoEmbed] });
     }

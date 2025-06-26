@@ -19,7 +19,7 @@ const getTimezoneFields = (page) => {
     // Create fields for each timezone
     return timezonesOnPage.map(tz => {
         const time = DateTime.now().setZone(tz);
-        const tzName = tzNameMap[tz] || 'Unknown Timezone'; //Find the corresponding tzNames. If it does not exist, 'Unknown Timezone' will be displayed.
+        const tzName = tzNameMap[tz] || 'Unknown Timezone'; // Find the corresponding tzNames. If it does not exist, 'Unknown Timezone' will be displayed.
         const emoji = global.getClockEmoji(time); // Use the global getClockEmoji function
         return {
             name: `${tzName}`, // Show the timezone

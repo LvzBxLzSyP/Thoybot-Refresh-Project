@@ -13,3 +13,88 @@ INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
+
+---
+
+Third-Party Licenses
+
+This project includes the following third-party dependencies. Each is
+provided under its respective license:
+
+---
+
+axios  
+Licensed under the MIT License  
+Copyright (c) 2014-present Matt Zabriskie & Collaborators  
+https://github.com/axios/axios
+
+---
+
+cheerio  
+Licensed under the MIT License  
+Copyright (c) 2011–2024 Cheerio Contributors  
+https://github.com/cheeriojs/cheerio
+
+---
+
+discord.js  
+Licensed under the Apache License, Version 2.0  
+Copyright 2021 Noel Buechler  
+Copyright 2015 Amish Shah  
+https://github.com/discordjs/discord.js
+
+---
+
+i18next  
+Licensed under the MIT License  
+Copyright (c) 2025 i18next  
+https://github.com/i18next/i18next
+
+---
+
+i18next-fs-backend  
+Licensed under the MIT License  
+Copyright (c) 2024 i18next  
+https://github.com/i18next/i18next-fs-backend
+
+---
+
+logform  
+Licensed under the MIT License  
+Copyright (c) 2017 Charlie Robbins & the Contributors  
+https://github.com/winstonjs/logform
+
+---
+
+luxon  
+Licensed under the MIT License  
+Copyright (c) 2019 JS Foundation and other contributors  
+https://github.com/moment/luxon
+
+---
+
+node-cron  
+Licensed under the MIT License  
+Copyright (c) 2016 Lucas Merencia <lucas.merencia@gmail.com>  
+https://github.com/node-cron/node-cron
+
+---
+
+ping  
+Licensed under the MIT License  
+Copyright (c) 2016 Daniel Zelisko  
+https://github.com/danielzzz/node-ping
+
+---
+
+winston  
+Licensed under the MIT License  
+Copyright (c) 2010 Charlie Robbins  
+https://github.com/winstonjs/winston
+
+---
+
+winston-daily-rotate-file  
+Licensed under the MIT License  
+Copyright (c) 2015–2024 winstonjs  
+https://github.com/winstonjs/winston-daily-rotate-file
