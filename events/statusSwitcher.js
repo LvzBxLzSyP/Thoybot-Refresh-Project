@@ -30,25 +30,18 @@ module.exports = {
          * Updates the bot's status with the current time in the selected time zone.
          * The status includes the time and the appropriate clock emoji.
          */
-        function updateStatus() {
-            const now = DateTime.now(); // Get the current moment using Luxon
+        function updateStatus(now) {
             const { name, timeZone } = timeZones[currentTimeZoneIndex];
             const timeInTimeZone = getTimeInTimeZone(now, timeZone);
-
-            // Format the time string
+        
             const timeString = formatTimeString(timeInTimeZone, name, timeZone);
-
-            // Get the appropriate clock emoji based on the time
             const clockEmoji = getClockEmoji(timeInTimeZone);
-
-            // Update the bot's activity status
+        
             client.user.setActivity(`${clockEmoji} ${timeString}`, {
-                type: ActivityType.Custom,
+                type: ActivityType.Custom, // 或改用 Watching/Playing 見前一則回覆
             });
-
-            // Move to the next time zone in the list
-            currentTimeZoneIndex =
-                (currentTimeZoneIndex + 1) % timeZones.length;
+        
+            currentTimeZoneIndex = (currentTimeZoneIndex + 1) % timeZones.length;
         }
 
         /**
@@ -57,12 +50,19 @@ module.exports = {
          */
         function scheduleNextUpdate() {
             const now = DateTime.now();
-            const timeToNextMinute = (60 - now.second) * 1000; // Wait until the next minute
-
+            const timeToNextMinute = (60 - now.second) * 1000;
+        
             setTimeout(() => {
-                currentTimeZoneIndex = 0; // Reset to the first time zone
-                updateStatus(); // Update the status
-                setInterval(updateStatus, 15 * 1000); // Update the status every 15 seconds
+                currentTimeZoneIndex = 0;
+        
+                // 在這裡先取得一次時間並傳入
+                let now = DateTime.now();
+                updateStatus(now);
+        
+                setInterval(() => {
+                    now = DateTime.now(); // 每次都重新取得一次時間，但只用一次
+                    updateStatus(now);
+                }, 15 * 1000);
             }, timeToNextMinute);
         }
 

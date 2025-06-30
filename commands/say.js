@@ -8,6 +8,9 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('say')
+        .setNameLocalizations({
+            'zh-TW': translate('say', 'zh-TW', 'name')
+        })
         .setDescription('Send the specified message')
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1)

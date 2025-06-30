@@ -6,6 +6,9 @@ module.exports = {
     // 定義 Slash 命令的資料
     data: new SlashCommandBuilder()
         .setName('reload')
+        .setNameLocalizations({
+            'zh-TW': translate('reload', 'zh-TW', 'name')
+        })
         .setDescription('Reload a specific command.')
         .addStringOption(option =>
             option.setName('command')

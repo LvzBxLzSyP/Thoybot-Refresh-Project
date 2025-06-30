@@ -16,6 +16,9 @@ module.exports = {
      */
     data: new SlashCommandBuilder()
         .setName('addcron')
+        .setNameLocalizations({
+            'zh-TW': translate('addcron', 'zh-TW', 'name')
+        })
         .setDescription('Set a reminder for a specific time or a daily reminder')
         .addStringOption(option =>
             option.setName('datetime')

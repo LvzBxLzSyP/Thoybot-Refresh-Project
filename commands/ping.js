@@ -13,6 +13,9 @@ module.exports = {
      */
     data: new SlashCommandBuilder()
         .setName('ping')
+        .setNameLocalizations({
+            'zh-TW': translate('ping', 'zh-TW', 'name')
+        })
         .setDescription('Delay in returning bot') // Command description
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),

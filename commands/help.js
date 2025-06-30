@@ -11,6 +11,9 @@ module.exports = {
      */
     data: new SlashCommandBuilder()
         .setName('help')
+        .setNameLocalizations({
+            'zh-TW': translate('help', 'zh-TW', 'name')
+        })
         .setDescription('Send a help message and provide a command selection menu')
         .setContexts(0, 1, 2) // The available context ranges for the command
         .setIntegrationTypes(0, 1), // The available integration types for the command

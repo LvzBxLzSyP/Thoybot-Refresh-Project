@@ -1,0 +1,13 @@
+{
+    "addcron": "添加行程",
+    "help": "幫助列表",
+    "info": "資訊",
+    "ping": "延遲",
+    "pingserver": "伺服器延遲測試",
+    "reload": "重新載入",
+    "say": "傳送",
+    "testerror": "錯誤邏輯測試",
+    "testlanguage": "語言檢測測試",
+    "time": "現在時間",
+    "user": "使用者資訊"
+}

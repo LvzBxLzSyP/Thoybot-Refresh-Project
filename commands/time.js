@@ -57,6 +57,9 @@ const getTimezoneFields = (page) => {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('time')
+        .setNameLocalizations({
+            'zh-TW': translate('time', 'zh-TW', 'name')
+        })
         .setDescription('Display the current time in different timezones.')
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1)

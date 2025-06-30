@@ -9,6 +9,9 @@ const ping = require('ping'); // Make sure you have the `ping` module installed
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pingserver')
+        .setNameLocalizations({
+            'zh-TW': translate('pingserver', 'zh-TW', 'name')
+        })
         .setDescription('Test the latency of a specified host.')
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1)

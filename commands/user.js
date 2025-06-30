@@ -8,6 +8,9 @@ const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("user")
+        .setNameLocalizations({
+            'zh-TW': translate('user', 'zh-TW', 'name')
+        })
         .setDescription("Show detailed user information")
         .setIntegrationTypes(0, 1)
         .setContexts(0, 2)

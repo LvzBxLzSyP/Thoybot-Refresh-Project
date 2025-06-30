@@ -21,6 +21,9 @@ module.exports = {
      */
     data: new SlashCommandBuilder()
         .setName("info")
+        .setNameLocalizations({
+            'zh-TW': translate('info', 'zh-TW', 'name')
+        })
         .setDescription("Information about the bot")
         .setContexts(0, 1, 2)
         .setIntegrationTypes(0, 1),

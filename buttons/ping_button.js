@@ -25,7 +25,7 @@ module.exports = {
         // Create a new embed message with the updated ping information
         const newPingEmbed = new EmbedBuilder()
             .setColor(global.getRandomColor())  // Use the global getRandomColor function for a random color
-            .setTitle('Ping Message')  // Title of the embed
+            .setTitle('Ping message')  // Title of the embed
             .setDescription(`The latency is ${interaction.client.ws.ping}ms`);  // Description with the current WebSocket ping
 
         // Update the original message with the new embed

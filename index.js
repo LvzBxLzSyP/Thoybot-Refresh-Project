@@ -60,7 +60,7 @@ const path = safeRequire('path');
 const readline = safeRequire('readline');
 const winston = safeRequire('winston');
 const DailyRotateFile = safeRequire('winston-daily-rotate-file');
-const { getClockEmoji, getRandomColor } = safeRequire('./utils/loadUtils.js');
+const { getClockEmoji, getRandomColor, translate } = safeRequire('./utils/loadUtils.js');
 
 // Load configuration file
 let config;
@@ -292,6 +292,7 @@ global.config = config;
 global.ITEMS_PER_PAGE = ITEMS_PER_PAGE;
 global.getRandomColor = getRandomColor;
 global.getClockEmoji = getClockEmoji;
+global.translate = translate;
 global.logWithTimestamp = logWithTimestamp;
 global.warnWithTimestamp = warnWithTimestamp;
 global.errorWithTimestamp = errorWithTimestamp;
@@ -384,10 +385,11 @@ const loadCommands = () => {
             }
 
         } catch (error) {
-            errorWithTimestamp(`[Command] Error loading command file ${file}: ${error}`);
+            errorWithTimestamp(`[Command] Error loading command file ${file}: ${error.stack}`);
         }
     }
-    
+
+    verboseWithTimestamp(`[VariableTest] client.commands: ${JSON.stringify(client.commands, null, 2)}`);
     verboseWithTimestamp(`[VariableTest] \nclient.commandInfo = ${JSON.stringify(client.commandInfo, null, 2)}`);
 
     // Log the total number of commands loaded
@@ -576,19 +578,28 @@ const registerSlashCommands = async (commands) => {
 console.log('[Bootstrap] Register command function set successfully');
 
 // Set other functions
-// Function that prints memory usage
+/**
+ * Logs current memory usage for debugging and monitoring.
+ * Outputs RSS, heap total, heap used, and external memory in MB.
+ * 
+ * @example
+ * logMemoryUsage();
+ * // Output:
+ * // 2025-06-28 01:46:33.418 [DEBUG]: [Memory] Usage: RSS: 16.46 MB, Heap Total: 39.82 MB,
+ * // 2025-06-28 01:46:33.431 [DEBUG]: [Memory] Usage: Heap Used: 36.51 MB, External: 4.34 MB
+ */
 function logMemoryUsage() {
-  const memoryUsage = process.memoryUsage();
-  
-  // Pre-calculate each value and keep two decimal places
-  const rss = (memoryUsage.rss / 1024 / 1024).toFixed(2);       // Resident Set Size (RSS)
-  const heapTotal = (memoryUsage.heapTotal / 1024 / 1024).toFixed(2); // Total heap memory allocated
-  const heapUsed = (memoryUsage.heapUsed / 1024 / 1024).toFixed(2);   // Heap memory currently in use
-  const external = (memoryUsage.external / 1024 / 1024).toFixed(2);   // External memory used by V8
-
-  // Print memory usage details, each on a separate line for clarity
-  debugWithTimestamp(`[Memory] Usage: RSS: ${rss} MB, Heap Total: ${heapTotal} MB,`);
-  debugWithTimestamp(`[Memory] Usage: Heap Used: ${heapUsed} MB, External: ${external} MB`);
+    const memoryUsage = process.memoryUsage();
+    
+    // Pre-calculate each value and keep two decimal places
+    const rss = (memoryUsage.rss / 1024 / 1024).toFixed(2);       // Resident Set Size (RSS)
+    const heapTotal = (memoryUsage.heapTotal / 1024 / 1024).toFixed(2); // Total heap memory allocated
+    const heapUsed = (memoryUsage.heapUsed / 1024 / 1024).toFixed(2);   // Heap memory currently in use
+    const external = (memoryUsage.external / 1024 / 1024).toFixed(2);   // External memory used by V8
+    
+    // Print memory usage details, each on a separate line for clarity
+    debugWithTimestamp(`[Memory] Usage: RSS: ${rss} MB, Heap Total: ${heapTotal} MB,`);
+    debugWithTimestamp(`[Memory] Usage: Heap Used: ${heapUsed} MB, External: ${external} MB`);
 }
 // Execute every 5 minutes (300000 milliseconds)
 setInterval(logMemoryUsage, 300000);

@@ -1,0 +1,13 @@
+{
+	"addcron": "addcron",
+	"help": "help",
+	"info": "info",
+	"ping": "ping",
+	"pingserver": "pingserver",
+	"reload": "reload",
+	"say": "say",
+	"testerror": "testerror",
+	"testlanguage": "testlanguage",
+	"time": "time",
+	"user": "user"
+}
