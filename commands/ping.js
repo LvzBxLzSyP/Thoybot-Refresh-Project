@@ -24,7 +24,7 @@ module.exports = {
      * Command information including a short and full description.
      */
     info: {
-        short: 'Delay in returning the bot', // Short description 
+        short: 'Delay in returning the bot',
         full: `Returns the bot's websocket delay, which can be retested using the button
         Command usage syntax:
         \`/ping\``
@@ -42,7 +42,7 @@ module.exports = {
      * @returns {Promise<void>} 
      */
     async execute(interaction) {
-        // Initialize Ping values with random colors    
+        // Set up the ping message with a random color
         const pingEmbed = new EmbedBuilder()
             .setColor(getRandomColor()) // Set a random color for the embed
             .setTitle('Ping message') // Title of the embed
@@ -50,9 +50,9 @@ module.exports = {
 
         // Create a button to refresh the ping
         const button = new ButtonBuilder()
-            .setCustomId('ping_button') // Custom ID for the button to identify it
-            .setLabel('Re-Ping') // Button label in Chinese
-            .setStyle(ButtonStyle.Primary); // Style the button as primary (blue)
+            .setCustomId('ping_button')
+            .setLabel('Re-Ping')
+            .setStyle(ButtonStyle.Primary);
 
         // Create a row to hold the button
         const row = new ActionRowBuilder().addComponents(button);

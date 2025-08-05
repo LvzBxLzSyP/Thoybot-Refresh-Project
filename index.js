@@ -1,6 +1,6 @@
 console.log('[Bootstrap] Starting bot');
 const appVer = '0.5.0';
-console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
+// console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
 
 /**
  * Checks if a required module is installed.
@@ -11,9 +11,9 @@ console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
 function ensureModuleExists(moduleName) {
     try {
         require.resolve(moduleName);
-        console.log(`[Bootstrap/Module] Module '${moduleName}' is loaded successfully.`);
+        // console.log(`[Bootstrap/Module] Module '${moduleName}' is loaded successfully.`);
     } catch {
-        console.error(`[Bootstrap/Fatal] Missing required module '${moduleName}'.`);
+        console.error(`[Bootstrap/Fatal] Missing required module '${moduleName}', please run 'npm i'`);
         process.exit(1);
     }
 }
@@ -107,12 +107,12 @@ const logLevel =
 console.log('[Bootstrap] Setting packages');
 const { Client, Collection, Events, GatewayIntentBits, Partials, SlashCommandBuilder, REST, Routes } = discord;
 const { DateTime } = luxon;
-console.log('[Bootstrap] Successfully set packages');
+// console.log('[Bootstrap] Successfully set packages');
 
-console.log(`[Bootstrap] Timezone: ${config.timezone}`);
+// console.log(`[Bootstrap] Timezone: ${config.timezone}`);
 
 const ITEMS_PER_PAGE = config.tzPerPages; // set timezones per pages
-console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
+// console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
 
 console.log('[Bootstrap] Initializing client');
 const client = new Client({ 
@@ -122,7 +122,7 @@ const client = new Client({
 });
 console.log('[Bootstrap] Initialized client');
 
-console.log('[Bootstrap] Setting up basic output functions');
+// console.log('[Bootstrap] Setting up basic output functions');
 const customLevels = {
     silly: 10,
     input: 9,
@@ -283,9 +283,9 @@ const debugWithTimestamp = createTimestampMethod('debug');
 const dataWithTimestamp = createTimestampMethod('data');
 const helpWithTimestamp = createTimestampMethod('help');
 const fatalWithTimestamp = createTimestampMethod('fatal');
-console.log('[Bootstrap] Basic output function setting successfully');
+// console.log('[Bootstrap] Basic output function setting successfully');
 
-console.log('[Bootstrap] Globalize variables');
+// console.log('[Bootstrap] Globalize variables');
 global.client = client;
 global.appVer = appVer;
 global.config = config;
@@ -305,16 +305,16 @@ global.debugWithTimestamp = debugWithTimestamp;
 global.dataWithTimestamp = dataWithTimestamp;
 global.helpWithTimestamp = helpWithTimestamp;
 global.fatalWithTimestamp = fatalWithTimestamp;
-console.log('[Bootstrap] Global variables set successfully');
+// console.log('[Bootstrap] Global variables set successfully');
 
-console.log('[Bootstrap] Set variables');
+// console.log('[Bootstrap] Set variables');
 client.commands = new Collection();
 client.buttons = new Collection();
 client.selectMenus = new Collection();
 client.commandInfo = {}; // Used to store info for each command
-console.log('[Bootstrap] All variables are set successfully');
+// console.log('[Bootstrap] All variables are set successfully');
 
-console.log('[Bootstrap] Setting command function');
+// console.log('[Bootstrap] Setting command function');
 /**
  * Load all commands from commands
  * @returns {*[]} - Commands array
@@ -462,9 +462,9 @@ const loadSubcommands = (subcommands, parentCommandData) => {
     const subcommandWord = loadedSubcommandsCount === 1 ? 'subcommand' : 'subcommands';
     logWithTimestamp(`[Subcommand] Loaded ${loadedSubcommandsCount} ${subcommandWord} for ${parentCommandData.name}`);
 };
-console.log('[Bootstrap] Command function set successfully');
+// console.log('[Bootstrap] Command function set successfully');
 
-console.log('[Bootstrap] Setting button function');
+// console.log('[Bootstrap] Setting button function');
 const loadButtons = () => {
     const buttonFiles = fs.readdirSync(path.join(__dirname, 'buttons')).filter(file => file.endsWith('.js'));
     
@@ -491,9 +491,9 @@ const loadButtons = () => {
 
     logWithTimestamp('[Button] Loaded all buttons');
 };
-console.log('[Bootstrap] Button function set successfully');
+// console.log('[Bootstrap] Button function set successfully');
 
-console.log('[Bootstrap] Setting menu function');
+// console.log('[Bootstrap] Setting menu function');
 const loadSelectMenus = () => {
     const selectMenuPath = path.join(__dirname, 'selectmenu'); // Get the path to the selectmenu directory
 
@@ -523,9 +523,9 @@ const loadSelectMenus = () => {
 
     logWithTimestamp('[SelectMenu] Loaded all select menus');
 };
-console.log('[Bootstrap] Menu function set successfully');
+// console.log('[Bootstrap] Menu function set successfully');
 
-console.log('[Bootstrap] Setting readline function');
+// console.log('[Bootstrap] Setting readline function');
 const loadReadlineCommands = () => {
     logWithTimestamp('[Readline] Starting load readline command');
     
@@ -556,9 +556,9 @@ const loadReadlineCommands = () => {
     logWithTimestamp('[Readline] Loaded all commands');
     return readlineCommands;
 };
-console.log('[Bootstrap] Readline function set successfully');
+// console.log('[Bootstrap] Readline function set successfully');
 
-console.log('[Bootstrap] Setting register command function');
+// console.log('[Bootstrap] Setting register command function');
 /**
  * Register slash command
  * @param commands - Commands arrays
@@ -575,7 +575,7 @@ const registerSlashCommands = async (commands) => {
         errorWithTimestamp('[Command] Failed to register slash commands:', error);
     }
 };
-console.log('[Bootstrap] Register command function set successfully');
+// console.log('[Bootstrap] Register command function set successfully');
 
 // Set other functions
 /**
@@ -665,7 +665,7 @@ client.once(Events.ClientReady, async () => {
 });
 console.log(`[Bootstrap] Initialized bot event 'ready'`);
 
-console.log(`[Bootstrap] Initializing bot event 'interactionCreate'`);
+// console.log(`[Bootstrap] Initializing bot event 'interactionCreate'`);
 // Listen for interaction events
 client.on(Events.InteractionCreate, 
     /**
@@ -764,6 +764,7 @@ client.on(Events.InteractionCreate,
         }
     }
 );
+
 console.log(`[Bootstrap] Initialized bot event 'interactionCreate'`);
 
 // Login bot
