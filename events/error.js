@@ -43,7 +43,7 @@ module.exports = {
     name: 'error',
     once: false,
     execute(error, client) {
-        errorWithTimestamp(`[Client] Discord Client Error: ${error}`);
+        errorWithTimestamp(`[Client] Discord Client Error: ${error}\nstack: ${error.stack}`);
         try {
             sendErrorEmbed(client, 'Bot Error', error.message);
         } catch (err) {
