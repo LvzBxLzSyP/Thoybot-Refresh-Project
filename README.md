@@ -27,7 +27,7 @@ git clone https://github.com/LvzBxLzSyP/Thoybot-Refresh-Project.git
 cd Thoybot-Refresh-Project
 ```
 
-Step 2: Install dependencies
+### Step 2: Install dependencies
 
 ```bash
 npm install
@@ -35,14 +35,14 @@ npm install
 yarn install
 ```
 
-Step 3: Configure the bot
+### Step 3: Configure the bot
 
 Rename config.example.json to config.json.
 
 Add your bot token, prefix, and other configuration details in config.json.
 
 
-Step 4: Run the bot
+### Step 4: Run the bot
 
 ```bash
 node index.js
