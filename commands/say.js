@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 
 /**
  * 'say' command allows the bot to send a specified message.
@@ -39,10 +39,10 @@ module.exports = {
 
         // Check if there is a channel, send the message to the channel
         if (!interaction.channel) {
-            await interaction.reply({ content: 'Sending the message...', ephemeral: true }); // Inform the user that the message is being sent
+            await interaction.reply({ content: 'Sending the message...', flags: MessageFlags.Ephemeral }); // Inform the user that the message is being sent
             await interaction.followUp(messageContent); // Send the message to the channel with follow up
         } else {
-            await interaction.reply({ content: 'Sending the message...', ephemeral: true }); // Inform the user that the message is being sent
+            await interaction.reply({ content: 'Sending the message...', flags: MessageFlags.Ephemeral }); // Inform the user that the message is being sent
             await interaction.channel.send(messageContent); // Send the message to the channel
         }
     },

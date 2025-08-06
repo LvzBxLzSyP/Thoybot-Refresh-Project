@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
     // Data that defines the Slash command
@@ -18,7 +18,7 @@ module.exports = {
 
     // Handle command execution logic
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         // Check if the user is an administrator (check ownerId)
         if (interaction.user.id !== config.ownerId) {
@@ -31,7 +31,7 @@ module.exports = {
 
         // Check if the command exists
         if (!fs.existsSync(commandPath)) {
-            return interaction.editReply({ content: `Command ${commandName} not found.`, ephemeral: true });
+            return interaction.editReply({ content: `Command ${commandName} not found.`, flags: MessageFlags.Ephemeral });
         }
 
         // Log: record who is reloading the command
@@ -60,7 +60,7 @@ module.exports = {
         } catch (error) {
             // Catching errors and responding
             errorWithTimestamp(error);
-            return interaction.editReply({ content: `An error occurred while reloading the command: ${error.message}`, ephemeral: true });
+            return interaction.editReply({ content: `An error occurred while reloading the command: ${error.message}`, flags: MessageFlags.Ephemeral });
         }
     }
 };

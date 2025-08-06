@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 
 /**
  * Handles button interactions and updates the ping message.
@@ -16,7 +16,7 @@ module.exports = {
     async execute(interaction) {
         // Prevent users other than the one who initiated the interaction from using the button
         if (interaction.user.id !== interaction.message.interaction.user.id) {
-            return interaction.reply({ content: 'This is not your button!', ephemeral: true });
+            return interaction.reply({ content: 'This is not your button!', flags: MessageFlags.Ephemeral });
         }
 
         // Acknowledge the button interaction

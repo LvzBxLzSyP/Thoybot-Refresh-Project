@@ -105,7 +105,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, Events, GatewayIntentBits, Partials, SlashCommandBuilder, REST, Routes } = discord;
+const { Client, Collection, Events, GatewayIntentBits, MessageFlags, Partials, SlashCommandBuilder, REST, Routes } = discord;
 const { DateTime } = luxon;
 // console.log('[Bootstrap] Successfully set packages');
 
@@ -707,10 +707,10 @@ client.on(Events.InteractionCreate,
                 // Handle the error response based on whether the interaction was already replied to
                 if (interaction.replied || interaction.deferred) {
                     // If interaction already replied/deferred, use editReply to show error message
-                    await interaction.editReply({ content: 'An error occurred, please try again later!', ephemeral: true });
+                    await interaction.editReply({ content: 'An error occurred, please try again later!', flags: MessageFlags.Ephemeral });
                 } else {
                     // Otherwise, send a new reply with an ephemeral error message
-                    await interaction.reply({ content: 'An error occurred, please try again later!', ephemeral: true });
+                    await interaction.reply({ content: 'An error occurred, please try again later!', flags: MessageFlags.Ephemeral });
                 }
             }
         } else if (interaction.isButton()) {
@@ -734,7 +734,7 @@ client.on(Events.InteractionCreate,
             } catch (error) {
                 // Log and handle errors specific to button interactions
                 errorWithTimestamp(`[Button] An error occurred for button ID: ${interaction.customId}\n${error}`);
-                await interaction.reply({ content: 'An error occurred while processing your action.', ephemeral: true });
+                await interaction.reply({ content: 'An error occurred while processing your action.', flags: MessageFlags.Ephemeral });
             }
         } else if (interaction.isStringSelectMenu()) {
             /**
@@ -756,7 +756,7 @@ client.on(Events.InteractionCreate,
             } catch (error) {
                 // Log and handle errors specific to select menu interactions
                 errorWithTimestamp(`[SelectMenu] An error occurred for select menu ID: ${customId}\n${error}`);
-                await interaction.reply({ content: 'An error occurred while processing your selection.', ephemeral: true });
+                await interaction.reply({ content: 'An error occurred while processing your selection.', flags: MessageFlags.Ephemeral });
             }
         } else {
             // Log a warning for unhandled interaction types

@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 
 /**
  * Button interaction command handler module
@@ -23,15 +23,13 @@ module.exports = {
      * @returns {Promise<void>} No return value
      */
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
-
         // Get the selected command from the interaction
         const selectedCommand = interaction.values[0];
 
         // If the selected command is to close the menu
         if (selectedCommand === 'close') {
             await interaction.update({ content: 'Select menu closed', components: [] });
-            await interaction.followUp({ content: 'Select menu closed', ephemeral: true });
+            await interaction.followUp({ content: 'Select menu closed', flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -45,10 +43,10 @@ module.exports = {
                 .setDescription(command.info?.full || command.data.description || 'No detailed information available')
                 .setColor(getRandomColor());
 
-            await interaction.followUp({ embeds: [commandEmbed], ephemeral: true });
+            await interaction.reply({ embeds: [commandEmbed], flags: MessageFlags.Ephemeral });
         } else {
             // If the command is not found, display an error message
-            await interaction.followUp({ content: 'Command not found.', ephemeral: true });
+            await interaction.reply({ content: 'Command not found.', flags: MessageFlags.Ephemeral });
         }
     },
 };

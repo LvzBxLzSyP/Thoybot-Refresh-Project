@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { DateTime } = require('luxon');
 const fs = require('fs');
 const path = require('path');
@@ -98,7 +98,7 @@ Examples:
             const delay = fullDateTime.diff(now).milliseconds;
 
             if (delay <= 0) {
-                return interaction.reply({ content: 'The specified time has already passed. Please provide a future time.', ephemeral: true });
+                return interaction.reply({ content: 'The specified time has already passed. Please provide a future time.', flags: MessageFlags.Ephemeral });
             }
 
             // Send the reminder to the target channel at the specified time
@@ -108,7 +108,7 @@ Examples:
                 });
             }, delay);
 
-            await interaction.reply({ content: `Reminder set for ${fullDateTime.toFormat('yyyy/MM/dd HH:mm')} in ${targetChannel instanceof interaction.user.constructor ? 'DM' : targetChannel.name}.`, ephemeral: true });
+            await interaction.reply({ content: `Reminder set for ${fullDateTime.toFormat('yyyy/MM/dd HH:mm')} in ${targetChannel instanceof interaction.user.constructor ? 'DM' : targetChannel.name}.`, flags: MessageFlags.Ephemeral });
         } else if (timeOnly.isValid) {
             // Daily reminder, only time part
             const hour = timeOnly.hour;
@@ -124,10 +124,10 @@ Examples:
                 });
             }, delay);
 
-            await interaction.reply({ content: `Daily reminder set for ${hour}:${minute} in ${targetChannel instanceof interaction.user.constructor ? 'DM' : targetChannel.name}.`, ephemeral: true });
+            await interaction.reply({ content: `Daily reminder set for ${hour}:${minute} in ${targetChannel instanceof interaction.user.constructor ? 'DM' : targetChannel.name}.`, flags: MessageFlags.Ephemeral });
         } else {
             // Invalid time format
-            await interaction.reply({ content: 'Invalid time format. Please use the "YYYY/MM/DD HH:mm" or "HH:mm" format.', ephemeral: true });
+            await interaction.reply({ content: 'Invalid time format. Please use the "YYYY/MM/DD HH:mm" or "HH:mm" format.', flags: MessageFlags.Ephemeral });
         }
     },
 };

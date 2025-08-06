@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 
 /**
  * This is a command to test error handling in the bot.
@@ -61,7 +61,7 @@ module.exports = {
             // Reply to the user that the error has been reported
             await interaction.reply({
                 content: 'An error occurred, and it has been reported to the administrator.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
         }
     }
