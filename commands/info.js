@@ -1,4 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, version: discordVersion } = require("discord.js");
+const path = require('path')
+const { execSync } = require('child_process');
 
 /**
  * Formats the uptime in a human-readable format (days, hours, minutes, seconds).
@@ -13,6 +15,19 @@ function formatUptime(uptime) {
     
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 }
+
+function getGitCommit(dir = process.cwd()) {
+  try {
+    const commit = execSync(`git rev-parse --short HEAD`).toString().trim();
+    debugWithTimestamp(commit)
+    return commit;
+  } catch (err) {
+    warnWithTimestamp(err);
+    return 'unknown';
+  }
+}
+
+const commit = getGitCommit();
 
 module.exports = {
     /**
@@ -73,10 +88,19 @@ module.exports = {
             `👥 Users: ${client.users.cache.size}`,
             `📝 Commands: ${client.commands?.size || 'N/A'}`,
             `📊 Memory Usage: ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`,
-            `🔧 Discord.js: v${discordVersion}`,
-            `📌 Bot Version: v${appVer}`,
-            `💻 Node.js: ${process.version}`
-        ].join('\n');
+            `🔧 Discord.js Version: v${discordVersion}`,
+            `📌 Bot Version: v${appVer}+${commit}`
+        ];
+        
+        // 檢查是否在Bun環境中運行
+        if (typeof Bun !== 'undefined') {
+            systemInfo.push(`💻 Node.js Compatible Version: ${process.version}`);
+            systemInfo.push(`🟡 Bun Version: v${Bun.version}`);
+        } else {
+            systemInfo.push(`💻 Node.js Version: ${process.version}`);
+        }
+        
+        const systemInfoResult = systemInfo.join('\n');
         
         const infoEmbed = new EmbedBuilder()
             .setColor(getRandomColor())
@@ -92,7 +116,7 @@ module.exports = {
                 },
                 {
                     name: '🔧 System Information',
-                    value: systemInfo,
+                    value: systemInfoResult,
                     inline: false
                 }
             )
