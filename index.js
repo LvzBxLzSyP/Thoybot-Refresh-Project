@@ -2,10 +2,11 @@ console.log('[Bootstrap] Starting bot');
 const appVer = '0.5.0';
 console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
 
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url || __filename);
+import {createRequire} from 'module';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import {fileURLToPath, pathToFileURL} from 'url';
+
+const require = createRequire(import.meta.url || __filename);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,7 +68,7 @@ const fs = safeRequire('fs');
 const readline = safeRequire('readline');
 const winston = safeRequire('winston');
 const DailyRotateFile = safeRequire('winston-daily-rotate-file');
-const { default: loadUtils } = await import('./utils/loadUtils.js');
+import loadUtils from '../utils/loadUtils.js';
 const utils = await loadUtils();
 const { getClockEmoji, getRandomColor, translate } = utils;
 
@@ -115,7 +116,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, Events, GatewayIntentBits, MessageFlags, SlashCommandBuilder, REST, Routes } = discord;
+const { Client, Collection, Events, GatewayIntentBits, MessageFlags, REST, Routes } = discord;
 const { DateTime } = luxon;
 console.log('[Bootstrap] Successfully set packages');
 
@@ -285,8 +286,7 @@ const debugWithTimestamp = createTimestampMethod('debug');
 const dataWithTimestamp = createTimestampMethod('data');
 const helpWithTimestamp = createTimestampMethod('help');
 const fatalWithTimestamp = (message, ...args) => {
-    const fatal = true;
-    global.fatal = fatal;
+    global.fatal = true;
     const meta = args.length > 0 ? { additionalData: args } : {};
     
     // Recording logs
