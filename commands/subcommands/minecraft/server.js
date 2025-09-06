@@ -14,7 +14,6 @@ module.exports = {
 
     async execute(interaction) {
         const host = interaction.options.getString('host');
-        await interaction.deferReply();
 
         let bedrockData = null;
         let javaData = null;

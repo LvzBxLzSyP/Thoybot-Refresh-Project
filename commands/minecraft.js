@@ -14,6 +14,7 @@ module.exports = {
     ],
     enabled: true,
     async execute(interaction) {
+        await interaction.deferReply();
         const subcmd = interaction.options.getSubcommand(); // Get the subcommand chosen by the user.
 
         // Find the corresponding handler for the selected subcommand.

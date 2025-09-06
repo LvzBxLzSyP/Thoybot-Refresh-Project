@@ -26,5 +26,10 @@
     "bot"
   ],
   "author": "Thoy037",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "eslint": "^9.33.0",
+    "globals": "^16.3.0"
+  }
 }

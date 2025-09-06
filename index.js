@@ -1,6 +1,6 @@
 console.log('[Bootstrap] Starting bot');
 const appVer = '0.5.0';
-// console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
+console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
 
 /**
  * Checks if a required module is installed.
@@ -11,7 +11,7 @@ const appVer = '0.5.0';
 function ensureModuleExists(moduleName) {
     try {
         require.resolve(moduleName);
-        // console.log(`[Bootstrap/Module] Module '${moduleName}' is loaded successfully.`);
+        console.log(`[Bootstrap/Module] Module '${moduleName}' is loaded successfully.`);
     } catch {
         console.error(`[Bootstrap/Fatal] Missing required module '${moduleName}', please run 'npm i'`);
         process.exit(1);
@@ -105,14 +105,14 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, Events, GatewayIntentBits, MessageFlags, Partials, SlashCommandBuilder, REST, Routes } = discord;
+const { Client, Collection, Events, GatewayIntentBits, MessageFlags, SlashCommandBuilder, REST, Routes } = discord;
 const { DateTime } = luxon;
-// console.log('[Bootstrap] Successfully set packages');
+console.log('[Bootstrap] Successfully set packages');
 
-// console.log(`[Bootstrap] Timezone: ${config.timezone}`);
+console.log(`[Bootstrap] Timezone: ${config.timezone}`);
 
 const ITEMS_PER_PAGE = config.tzPerPages; // set timezones per pages
-// console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
+console.log(`[Bootstrap] Timezone per page: ${ITEMS_PER_PAGE}`);
 
 console.log('[Bootstrap] Initializing client');
 const client = new Client({ 
@@ -122,7 +122,7 @@ const client = new Client({
 });
 console.log('[Bootstrap] Initialized client');
 
-// console.log('[Bootstrap] Setting up basic output functions');
+console.log('[Bootstrap] Setting up basic output functions');
 const customLevels = {
     silly: 10,
     input: 9,
@@ -249,14 +249,6 @@ const logger = winston.createLogger({
     exitOnError: false
 });
 
-// Add special handling for fatal errors
-logger.on('fatal', (message) => {
-    console.error(`FATAL ERROR: ${message}`);
-    rl.close();
-    client.destroy();
-    process.exit(1);
-});
-
 // Create corresponding timestamped methods for all levels
 const createTimestampMethod = (level) => {
     return (message, ...args) => {
@@ -282,10 +274,22 @@ const promptWithTimestamp = createTimestampMethod('prompt');
 const debugWithTimestamp = createTimestampMethod('debug');
 const dataWithTimestamp = createTimestampMethod('data');
 const helpWithTimestamp = createTimestampMethod('help');
-const fatalWithTimestamp = createTimestampMethod('fatal');
-// console.log('[Bootstrap] Basic output function setting successfully');
+const fatalWithTimestamp = (message, ...args) => {
+    const fatal = true;
+    global.fatal = fatal;
+    const meta = args.length > 0 ? { additionalData: args } : {};
+    
+    // Recording logs
+    logger.log('fatal', message, meta);
+    
+    // Execute cleanup logic immediately
+    console.error(`FATAL ERROR: ${message}`);
+    if (global.rl) global.rl.close();
+    if (typeof client !== 'undefined') client.destroy();
+};
+console.log('[Bootstrap] Basic output function setting successfully');
 
-// console.log('[Bootstrap] Globalize variables');
+console.log('[Bootstrap] Globalize variables');
 global.client = client;
 global.appVer = appVer;
 global.config = config;
@@ -305,16 +309,16 @@ global.debugWithTimestamp = debugWithTimestamp;
 global.dataWithTimestamp = dataWithTimestamp;
 global.helpWithTimestamp = helpWithTimestamp;
 global.fatalWithTimestamp = fatalWithTimestamp;
-// console.log('[Bootstrap] Global variables set successfully');
+console.log('[Bootstrap] Global variables set successfully');
 
-// console.log('[Bootstrap] Set variables');
+console.log('[Bootstrap] Set variables');
 client.commands = new Collection();
 client.buttons = new Collection();
 client.selectMenus = new Collection();
 client.commandInfo = {}; // Used to store info for each command
-// console.log('[Bootstrap] All variables are set successfully');
+console.log('[Bootstrap] All variables are set successfully');
 
-// console.log('[Bootstrap] Setting command function');
+console.log('[Bootstrap] Setting command function');
 /**
  * Load all commands from commands
  * @returns {*[]} - Commands array
@@ -462,9 +466,9 @@ const loadSubcommands = (subcommands, parentCommandData) => {
     const subcommandWord = loadedSubcommandsCount === 1 ? 'subcommand' : 'subcommands';
     logWithTimestamp(`[Subcommand] Loaded ${loadedSubcommandsCount} ${subcommandWord} for ${parentCommandData.name}`);
 };
-// console.log('[Bootstrap] Command function set successfully');
+console.log('[Bootstrap] Command function set successfully');
 
-// console.log('[Bootstrap] Setting button function');
+console.log('[Bootstrap] Setting button function');
 const loadButtons = () => {
     const buttonFiles = fs.readdirSync(path.join(__dirname, 'buttons')).filter(file => file.endsWith('.js'));
     
@@ -491,9 +495,9 @@ const loadButtons = () => {
 
     logWithTimestamp('[Button] Loaded all buttons');
 };
-// console.log('[Bootstrap] Button function set successfully');
+console.log('[Bootstrap] Button function set successfully');
 
-// console.log('[Bootstrap] Setting menu function');
+console.log('[Bootstrap] Setting menu function');
 const loadSelectMenus = () => {
     const selectMenuPath = path.join(__dirname, 'selectmenu'); // Get the path to the selectmenu directory
 
@@ -523,9 +527,9 @@ const loadSelectMenus = () => {
 
     logWithTimestamp('[SelectMenu] Loaded all select menus');
 };
-// console.log('[Bootstrap] Menu function set successfully');
+console.log('[Bootstrap] Menu function set successfully');
 
-// console.log('[Bootstrap] Setting readline function');
+console.log('[Bootstrap] Setting readline function');
 const loadReadlineCommands = () => {
     logWithTimestamp('[Readline] Starting load readline command');
     
@@ -556,9 +560,9 @@ const loadReadlineCommands = () => {
     logWithTimestamp('[Readline] Loaded all commands');
     return readlineCommands;
 };
-// console.log('[Bootstrap] Readline function set successfully');
+console.log('[Bootstrap] Readline function set successfully');
 
-// console.log('[Bootstrap] Setting register command function');
+console.log('[Bootstrap] Setting register command function');
 /**
  * Register slash command
  * @param commands - Commands arrays
@@ -575,7 +579,7 @@ const registerSlashCommands = async (commands) => {
         errorWithTimestamp('[Command] Failed to register slash commands:', error);
     }
 };
-// console.log('[Bootstrap] Register command function set successfully');
+console.log('[Bootstrap] Register command function set successfully');
 
 // Set other functions
 /**
@@ -665,7 +669,7 @@ client.once(Events.ClientReady, async () => {
 });
 console.log(`[Bootstrap] Initialized bot event 'ready'`);
 
-// console.log(`[Bootstrap] Initializing bot event 'interactionCreate'`);
+console.log(`[Bootstrap] Initializing bot event 'interactionCreate'`);
 // Listen for interaction events
 client.on(Events.InteractionCreate, 
     /**
@@ -832,8 +836,17 @@ function initReadline() {
     // Listen to the readline interface closing event
     rl.on('close', () => {
         logWithTimestamp('[Client] Bot exiting');
-        process.exit(0); // Exit Program
+        
+        if (typeof global.fatal === 'undefined') {
+            global.fatal = false;
+        };
+        if (fatal == false) {
+            process.exit(0); // Exit Program
+        } else {
+            process.exit(1);
+        }
     });
     
     rl.prompt();
+    global.rl = rl;
 }

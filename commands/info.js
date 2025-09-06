@@ -12,14 +12,18 @@ function formatUptime(uptime) {
     const hours = Math.floor((uptime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((uptime % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((uptime % (1000 * 60)) / 1000);
-    
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+    let str = '';
+    if (days) str += `${days}d `;
+    if (hours) str += `${hours}h `;
+    if (minutes) str += `${minutes}m `;
+    str += `${seconds}s`;
+    return str.trim();
 }
 
 function getGitCommit(dir = process.cwd()) {
   try {
     const commit = execSync(`git rev-parse --short HEAD`).toString().trim();
-    debugWithTimestamp(commit)
     return commit;
   } catch (err) {
     warnWithTimestamp(err);
