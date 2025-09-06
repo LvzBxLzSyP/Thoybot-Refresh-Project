@@ -68,7 +68,7 @@ const fs = safeRequire('fs');
 const readline = safeRequire('readline');
 const winston = safeRequire('winston');
 const DailyRotateFile = safeRequire('winston-daily-rotate-file');
-import loadUtils from '../utils/loadUtils.js';
+import loadUtils from './utils/loadUtils.js';
 const utils = await loadUtils();
 const { getClockEmoji, getRandomColor, translate } = utils;
 
@@ -116,7 +116,7 @@ const logLevel =
 
 // Import specific parts of modules after ensuring they exist
 console.log('[Bootstrap] Setting packages');
-const { Client, Collection, Events, GatewayIntentBits, MessageFlags, REST, Routes } = discord;
+const { Client, Collection, Events, GatewayIntentBits, MessageFlags, REST, Routes, SlashCommandBuilder } = discord;
 const { DateTime } = luxon;
 console.log('[Bootstrap] Successfully set packages');
 
@@ -354,7 +354,7 @@ const loadModule = async (filePath) => {
                 } catch (err) {
                     // 如果其實是 CJS，就 fallback
                     if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ERR_UNKNOWN_FILE_EXTENSION' || err instanceof SyntaxError) {
-                        return requireCJS(filePath);
+                        return require(filePath);
                     }
                     throw err; // 其他錯誤照拋
                 }
@@ -398,14 +398,15 @@ const loadCommands = async () => {
                 warnWithTimestamp(`[Command] Invalid command: ${file}`);
                 continue;
             }
+            
+            if (command.subcommands) {
+                await loadSubcommands(command.subcommands, command.data);
+            }
 
             client.commands.set(command.data.name, command);
             commands.push(command.data.toJSON ? command.data.toJSON() : command.data);
 
             if (command.info) client.commandInfo[command.data.name] = command.info;
-            if (command.subcommands) {
-                await loadSubcommands(command.subcommands, command.data);
-            }
 
             debugWithTimestamp(`[Command] Loaded: ${command.data.name}`);
             loadedCount++;
@@ -415,6 +416,8 @@ const loadCommands = async () => {
     }
 
     logWithTimestamp(`[Command] Total loaded: ${loadedCount}`);
+    verboseWithTimestamp(`[VariableTest] client.commands: ${JSON.stringify(client.commands, null, 2)}`);
+    verboseWithTimestamp(`[VariableTest] \nclient.commandInfo = ${JSON.stringify(client.commandInfo, null, 2)}`);
     return commands;
 };
 
