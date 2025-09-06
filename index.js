@@ -2,6 +2,14 @@ console.log('[Bootstrap] Starting bot');
 const appVer = '0.5.0';
 console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url || __filename);
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /**
  * Checks if a required module is installed.
  * If the module is missing, logs an error and exits the program.
@@ -56,16 +64,18 @@ function checkConfigValues(config) {
 const discord = safeRequire('discord.js');
 const luxon = safeRequire('luxon');
 const fs = safeRequire('fs');
-const path = safeRequire('path');
 const readline = safeRequire('readline');
 const winston = safeRequire('winston');
 const DailyRotateFile = safeRequire('winston-daily-rotate-file');
-const { getClockEmoji, getRandomColor, translate } = safeRequire('./utils/loadUtils.js');
+const { default: loadUtils } = await import('./utils/loadUtils.js');
+const utils = await loadUtils();
+const { getClockEmoji, getRandomColor, translate } = utils;
 
 // Load configuration file
 let config;
 try {
-    config = require('./configs/config')
+    const configModule = await import('./configs/config.js');
+    config = configModule.default; // 必須取 .default
     console.log("[Bootstrap/Config] Config file 'config.js' loaded successfully.");
 } catch (error) {
     console.error('[Bootstrap/Fatal] Missing or invalid config.js file.');
@@ -318,88 +328,93 @@ client.selectMenus = new Collection();
 client.commandInfo = {}; // Used to store info for each command
 console.log('[Bootstrap] All variables are set successfully');
 
+console.log('[Bootstrap] Setting module loader');
+const isESM = (() => {
+    try {
+        const pkgPath = path.join(process.cwd(), 'package.json');
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+        return pkg.type === 'module';
+    } catch {
+        return false;
+    }
+})();
+
+const loadModule = async (filePath) => {
+    const ext = path.extname(filePath);
+
+    try {
+        if (ext === '.cjs') return require(filePath);
+        if (ext === '.mjs') return await import(pathToFileURL(filePath).href);
+
+        if (ext === '.js') {
+            if (isESM) {
+                try {
+                    // 嘗試用 ESM parser
+                    return await import(pathToFileURL(filePath).href);
+                } catch (err) {
+                    // 如果其實是 CJS，就 fallback
+                    if (err.code === 'ERR_MODULE_NOT_FOUND' || err.code === 'ERR_UNKNOWN_FILE_EXTENSION' || err instanceof SyntaxError) {
+                        return requireCJS(filePath);
+                    }
+                    throw err; // 其他錯誤照拋
+                }
+            } else {
+                return require(filePath);
+            }
+        }
+
+        throw new Error(`[Loader] Unsupported extension: ${ext}`);
+    } catch (err) {
+        throw new Error(`[Loader] Failed to load ${filePath}: ${err.message}`);
+    }
+}
+
+
 console.log('[Bootstrap] Setting command function');
 /**
  * Load all commands from commands
  * @returns {*[]} - Commands array
  */
-const loadCommands = () => {
+const loadCommands = async () => {
     logWithTimestamp('[Command] Starting to load commands');
-    
+
     if (!client.commands) client.commands = new Collection();
     if (!client.commandInfo) client.commandInfo = {};
 
-    const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
+    const dir = path.join(__dirname, 'commands');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') || f.endsWith('.cjs') || f.endsWith('.mjs'));
+
+    let loadedCount = 0;
     const commands = [];
-    let loadedCommandCount = 0; // Track the number of commands loaded
 
-    const isValidCommand = (command, file) => {
-        if (!command.data || !command.execute) {
-            warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data' or 'execute'. Skipping.`);
-            return false;
-        }
-        if (command.enabled === false) {
-            warnWithTimestamp(`[Command] Command '${command.data.name}' is disabled, skipping.`);
-            return false;
-        }
-        return true;
-    };
-
-    for (const file of commandFiles) {
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
         try {
-            const command = require(path.join(__dirname, 'commands', file));
+            const mod = await loadModule(fullPath);
+            const command = mod.default || mod;
 
-            // Handle legacy format by assigning 'data' from 'name' if necessary
-            if (!command.data) {
-                if (command.name) {
-                    command.data = { name: command.name };
-                } else {
-                    warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data' or 'name'. Skipping.`);
-                    continue;
-                }
+            if (!command.data && command.name) command.data = { name: command.name };
+            if (!command.data || !command.execute) {
+                warnWithTimestamp(`[Command] Invalid command: ${file}`);
+                continue;
             }
 
-            // Validate the command format
-            if (!isValidCommand(command, file)) continue;
-
-            // If using SlashCommandBuilder format, ensure it is valid
-            if (command.data instanceof SlashCommandBuilder) {
-                if (!command.data.name || !command.execute) {
-                    warnWithTimestamp(`[Command] Warning: Command file ${file} is missing 'data.name' or 'execute'. Skipping.`);
-                    continue;
-                }
-            }
-
-            // Log the successfully loaded command
-            debugWithTimestamp(`[Command] Loaded command: ${command.data.name}`);
-            loadedCommandCount++;
-
-            // Load subcommands if they exist
-            if (command.subcommands) {
-                loadSubcommands(command.subcommands, command.data);
-            }
-
-            // Add the command to the collection
             client.commands.set(command.data.name, command);
             commands.push(command.data.toJSON ? command.data.toJSON() : command.data);
 
-            // Store additional command info
-            if (command.info) {
-                client.commandInfo[command.data.name] = command.info;
+            if (command.info) client.commandInfo[command.data.name] = command.info;
+            if (command.subcommands) {
+                await loadSubcommands(command.subcommands, command.data);
             }
 
-        } catch (error) {
-            errorWithTimestamp(`[Command] Error loading command file ${file}: ${error.stack}`);
+            debugWithTimestamp(`[Command] Loaded: ${command.data.name}`);
+            loadedCount++;
+        } catch (err) {
+            errorWithTimestamp(`[Command] Failed to load ${file}: ${err}`);
         }
     }
 
-    verboseWithTimestamp(`[VariableTest] client.commands: ${JSON.stringify(client.commands, null, 2)}`);
-    verboseWithTimestamp(`[VariableTest] \nclient.commandInfo = ${JSON.stringify(client.commandInfo, null, 2)}`);
-
-    // Log the total number of commands loaded
-    logWithTimestamp(`[Command] Total commands loaded: ${loadedCommandCount}`);
-    logWithTimestamp('[Command] All commands loaded');
-
+    logWithTimestamp(`[Command] Total loaded: ${loadedCount}`);
     return commands;
 };
 
@@ -409,155 +424,145 @@ const loadCommands = () => {
  * @param parentCommandData - command
  */
 // Loading subcommands
-const loadSubcommands = (subcommands, parentCommandData) => {
-
-    logWithTimestamp('[Subcommand] Starting load subcommands');
-    // Ensure the parent command has the method `addSubcommand`
+const loadSubcommands = async (subcommands, parentCommandData) => {
     if (!parentCommandData.addSubcommand) {
-        errorWithTimestamp(`[Subcommand] Parent command '${parentCommandData.name}' does not have the method 'addSubcommand'. Skipping subcommands.`);
+        errorWithTimestamp(`[Subcommand] Parent command '${parentCommandData.name}' does not have 'addSubcommand'. Skipping subcommands.`);
         return;
     }
-    
+
     logWithTimestamp(`[Subcommand] Loading subcommands for ${parentCommandData.name}`);
 
-    // Initialize a counter for the number of loaded subcommands
-    let loadedSubcommandsCount = 0;
+    let loadedCount = 0;
 
-    // Iterate over all subcommands
-    for (const subcommand of subcommands) {
-        const fullCommandName = `${parentCommandData.name} ${subcommand.data.name}`;
-
+    for (const sub of subcommands) {
         try {
-            // Make sure the subcommand structure is correct
+            let subcommand;
+
+            if (typeof sub === 'string') {
+                const fullPath = path.join(__dirname, 'commands', sub);
+                const mod = await loadModule(fullPath);
+                subcommand = mod.default || mod;
+            } else {
+                subcommand = sub;
+            }
+
+            const fullCommandName = `${parentCommandData.name} ${subcommand.data?.name || subcommand.name}`;
+
             if (!subcommand || !subcommand.data || !subcommand.data.name || !subcommand.execute) {
-                warnWithTimestamp(`[Subcommand] Warning: Subcommand '${fullCommandName}' is missing 'data' or 'name' or 'execute'. Skipping.`);
+                warnWithTimestamp(`[Subcommand] Invalid subcommand: ${fullCommandName}`);
                 continue;
             }
 
-            // If the subcommand is disabled, it is skipped.
             if (subcommand.enabled === false) {
                 warnWithTimestamp(`[Subcommand] Subcommand '${fullCommandName}' is disabled, skipping.`);
                 continue;
             }
 
-            // Add subcommand to the parent command's subcommand
             parentCommandData.addSubcommand(subcommand.data);
 
-            // Output information about successful subcommand loading
-            debugWithTimestamp(`[Subcommand] Loaded subcommand: ${fullCommandName}`);
+            if (subcommand.info) client.commandInfo[fullCommandName] = subcommand.info;
 
-            // If there is additional information, it can be stored
-            if (subcommand.info) {
-                client.commandInfo[fullCommandName] = subcommand.info;
-            }
-
-            // Subcommands are added to the client's command set.
             client.commands.set(fullCommandName, subcommand);
 
-            // Increment the count of loaded subcommands
-            loadedSubcommandsCount++;
-
-        } catch (error) {
-            errorWithTimestamp(`[Subcommand] Error loading subcommand '${fullCommandName}': ${error}`);
+            debugWithTimestamp(`[Subcommand] Loaded: ${fullCommandName}`);
+            loadedCount++;
+        } catch (err) {
+            errorWithTimestamp(`[Subcommand] Failed to load subcommand: ${err}`);
         }
     }
 
-    // Display the number of loaded subcommands for the parent command
-    const subcommandWord = loadedSubcommandsCount === 1 ? 'subcommand' : 'subcommands';
-    logWithTimestamp(`[Subcommand] Loaded ${loadedSubcommandsCount} ${subcommandWord} for ${parentCommandData.name}`);
+    const word = loadedCount === 1 ? 'subcommand' : 'subcommands';
+    logWithTimestamp(`[Subcommand] Loaded ${loadedCount} ${word} for ${parentCommandData.name}`);
 };
 console.log('[Bootstrap] Command function set successfully');
 
 console.log('[Bootstrap] Setting button function');
-const loadButtons = () => {
-    const buttonFiles = fs.readdirSync(path.join(__dirname, 'buttons')).filter(file => file.endsWith('.js'));
-    
-    logWithTimestamp('[Button] Starting load buttons');
+const loadButtons = async () => {
+    logWithTimestamp('[Button] Starting to load buttons');
 
-    for (const file of buttonFiles) {
+    const dir = path.join(__dirname, 'buttons');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') || f.endsWith('.cjs') || f.endsWith('.mjs'));
+
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
         try {
-            const button = require(path.join(__dirname, 'buttons', file));
+            const mod = await loadModule(fullPath);
+            const button = mod.default || mod;
+
             if (button.customId && button.execute) {
                 if (Array.isArray(button.customId)) {
-                    // If there are multiple customIds, register them separately
                     button.customId.forEach(id => client.buttons.set(id, button));
                 } else {
                     client.buttons.set(button.customId, button);
                 }
-                debugWithTimestamp(`[Button] Loaded button: ${button.customId}`);
+                debugWithTimestamp(`[Button] Loaded: ${button.customId}`);
             } else {
                 warnWithTimestamp(`[Button] Invalid button file: ${file}`);
             }
-        } catch (error) {
-            errorWithTimestamp(`[Button] Failed to load button file ${file}: ${error}`);
+        } catch (err) {
+            errorWithTimestamp(`[Button] Failed to load ${file}: ${err}`);
         }
     }
 
-    logWithTimestamp('[Button] Loaded all buttons');
+    logWithTimestamp('[Button] All buttons loaded');
 };
 console.log('[Bootstrap] Button function set successfully');
 
 console.log('[Bootstrap] Setting menu function');
-const loadSelectMenus = () => {
-    const selectMenuPath = path.join(__dirname, 'selectmenu'); // Get the path to the selectmenu directory
+const loadSelectMenus = async () => {
+    logWithTimestamp('[SelectMenu] Starting to load select menus');
 
-    // Read all files ending with .js in the directory
-    const selectMenuFiles = fs.readdirSync(selectMenuPath).filter(file => file.endsWith('.js'));
-    
-    logWithTimestamp('[SelectMenu] Starting load select menus')
-    
-    // Traverse each select menu file
-    for (const file of selectMenuFiles) {
-        const filePath = path.join(selectMenuPath, file);  // Get the full path of the file
+    const dir = path.join(__dirname, 'selectmenu');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') || f.endsWith('.cjs') || f.endsWith('.mjs'));
 
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
         try {
-            const selectMenu = require(filePath);  // Dynamically loading modules
+            const mod = await loadModule(fullPath);
+            const menu = mod.default || mod;
 
-            if (selectMenu.data && selectMenu.execute) {
-                // Register the custom_id and corresponding execution method of each select menu
-                client.selectMenus.set(selectMenu.data.custom_id, selectMenu);
-                debugWithTimestamp(`[SelectMenu] Loaded select menu: ${selectMenu.data.custom_id}`);
+            if (menu.data && menu.execute) {
+                client.selectMenus.set(menu.data.custom_id, menu);
+                debugWithTimestamp(`[SelectMenu] Loaded: ${menu.data.custom_id}`);
             } else {
                 warnWithTimestamp(`[SelectMenu] Invalid select menu file: ${file}`);
             }
-        } catch (error) {
-            errorWithTimestamp(`[SelectMenu] Failed to load select menu file ${file}: ${error}`);
+        } catch (err) {
+            errorWithTimestamp(`[SelectMenu] Failed to load ${file}: ${err}`);
         }
     }
 
-    logWithTimestamp('[SelectMenu] Loaded all select menus');
+    logWithTimestamp('[SelectMenu] All select menus loaded');
 };
 console.log('[Bootstrap] Menu function set successfully');
 
 console.log('[Bootstrap] Setting readline function');
-const loadReadlineCommands = () => {
-    logWithTimestamp('[Readline] Starting load readline command');
-    
+const loadReadlineCommands = async () => {
+    logWithTimestamp('[Readline] Starting to load readline commands');
+
+    const dir = path.join(__dirname, 'console');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') || f.endsWith('.cjs') || f.endsWith('.mjs'));
+
     const readlineCommands = {};
 
-    try {
-        // Dynamically loading command modules
-        fs.readdirSync(path.join(__dirname, 'console')).forEach(file => {
-            // Make sure to only load files ending with .js
-            if (file.endsWith('.js')) {
-                try {
-                    const command = require(path.join(__dirname, 'console', file));
-                    if (command.name) {
-                        readlineCommands[command.name] = command;
-                        debugWithTimestamp(`[Readline] Loaded command ${command.name}`);
-                    } else {
-                        warnWithTimestamp(`[Readline] Command in ${file} does not have a 'name' property.`);
-                    }
-                } catch (err) {
-                    errorWithTimestamp(`[Readline] Error loading command from ${file}: ${err}`);
-                }
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
+        try {
+            const mod = await loadModule(fullPath);
+            const command = mod.default || mod;
+
+            if (command.name) {
+                readlineCommands[command.name] = command;
+                debugWithTimestamp(`[Readline] Loaded: ${command.name}`);
+            } else {
+                warnWithTimestamp(`[Readline] Invalid command in ${file}`);
             }
-        });
-    } catch (err) {
-        errorWithTimestamp('[Readline] Error reading commands directory:', err);
+        } catch (err) {
+            errorWithTimestamp(`[Readline] Failed to load ${file}: ${err}`);
+        }
     }
 
-    logWithTimestamp('[Readline] Loaded all commands');
+    logWithTimestamp('[Readline] All readline commands loaded');
     return readlineCommands;
 };
 console.log('[Bootstrap] Readline function set successfully');
@@ -647,9 +652,9 @@ function getEnvironmentInfo() {
 console.log(`[Bootstrap] Initializing bot event 'ready'`);
 client.once(Events.ClientReady, async () => {
     // Register slash command
-    const commands = loadCommands();
-    loadButtons();
-    loadSelectMenus();
+    const commands = await loadCommands();
+    await loadButtons();
+    await loadSelectMenus();
     await registerSlashCommands(commands);
     
     logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
@@ -776,13 +781,17 @@ console.log('[Bootstrap] Bootstrap End, logging bot');
 client.login(config.token);
 
 // Load event handler
-const loadEvents = () => {
-    const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+const loadEvents = async () => {
+    const dir = path.join(__dirname, 'events');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') || f.endsWith('.cjs') || f.endsWith('.mjs'));
+
     logWithTimestamp('[Event] Starting load events');
 
-    for (const file of eventFiles) {
+    for (const file of files) {
         try {
-            const event = require(`./events/${file}`);
+            const fullPath = path.join(dir, file);
+            const mod = await loadModule(fullPath); // loadModule 是你前面定義的通用模組載入器
+            const event = mod.default || mod;
 
             if (event.once) {
                 client.once(event.name, (...args) => event.execute(...args, client));
@@ -791,23 +800,23 @@ const loadEvents = () => {
                 client.on(event.name, (...args) => event.execute(...args, client));
                 debugWithTimestamp(`[Event] Loaded on event ${event.name}`);
             }
-        } catch (error) {
-            errorWithTimestamp(`[Event] Failed to load event file ${file}: ${error}`);
+        } catch (err) {
+            errorWithTimestamp(`[Event] Failed to load event file ${file}: ${err}`);
         }
     }
 
     logWithTimestamp('[Event] Finished loading all events');
 };
-loadEvents();
+await loadEvents();
 
-function initReadline() {
+const initReadline = async () => {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
         prompt: '> '
     });
         
-    const rlcmd = loadReadlineCommands();
+    const rlcmd = await loadReadlineCommands();
         
     rl.on('line', (input) => {
         const trimmedInput = input.trim();

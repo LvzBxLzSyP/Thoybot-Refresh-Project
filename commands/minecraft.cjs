@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
-const serverCommand = require('./subcommands/minecraft/server');
-const playerCommand = require('./subcommands/minecraft/player');
+const serverCommand = require('./subcommands/minecraft/server.cjs');
+const playerCommand = require('./subcommands/minecraft/player.cjs');
 
 module.exports = {
     data: new SlashCommandBuilder()

@@ -25,6 +25,7 @@
     "discord",
     "bot"
   ],
+  "type": "module",
   "author": "Thoy037",
   "license": "ISC",
   "devDependencies": {

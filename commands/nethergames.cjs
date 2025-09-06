@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
-const playerCommand = require('./subcommands/nethergames/player');
-const guildCommand = require('./subcommands/nethergames/guild');
-const factionCommand = require('./subcommands/nethergames/faction');
+const playerCommand = require('./subcommands/nethergames/player.cjs');
+const guildCommand = require('./subcommands/nethergames/guild.cjs');
+const factionCommand = require('./subcommands/nethergames/faction.cjs');
 
 /**
  * `/nethergames` main command module
