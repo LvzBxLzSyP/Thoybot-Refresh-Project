@@ -1,3 +1,4 @@
+1 // 1,"""
 console.log('[Bootstrap] Starting bot');
 const appVer = '0.5.0';
 console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
@@ -811,23 +812,27 @@ function initReadline() {
         
     rl.on('line', (input) => {
         const trimmedInput = input.trim();
-            
+    
         // Skip processing if input is empty
         if (!trimmedInput) {
             rl.prompt();
             return;
         }
-        
-        const command = rlcmd[trimmedInput];
-        
+    
+        // Split the input by spaces
+        const args = trimmedInput.split(/\s+/); // 用正則處理多個空格
+        const cmdName = args.shift(); // Take the first one as the command name
+        const command = rlcmd[cmdName];
+    
         if (command) {
             try {
-                command.execute(rl, client); // Assuming each command has an `execute` method
+                // Pass rl, client and parameters into execute
+                command.execute(rl, client, args); 
             } catch (err) {
-                errorWithTimestamp(`Error executing command: ${trimmedInput}`, err);
+                errorWithTimestamp(`Error executing command: ${cmdName}`, err);
             }
         } else {
-            errorWithTimestamp(`[Readline] Unknown command: ${trimmedInput}`);
+            errorWithTimestamp(`[Readline] Unknown command: ${cmdName}`);
         }
     
         rl.prompt();
@@ -850,3 +855,7 @@ function initReadline() {
     rl.prompt();
     global.rl = rl;
 }
+/*"""
+print("Why are you using Python or sh to execute this?")
+print("This is a fucking Node.js script")
+#*/

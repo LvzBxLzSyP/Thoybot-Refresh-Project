@@ -1,10 +1,19 @@
 /**
- * Handles the exit command, shuts down the bot, and closes the readline connection.
- * @module exit
+ * Handles the hello command.
+ * @module hello
  */
 module.exports = {
     name: 'hello', // Command name
-    execute(rl, client) {
-        logWithTimestamp('[Hello] Hello World! :)');
+    /**
+     * @param {ReadLine} rl - Readline interface
+     * @param {Client} client - Your bot/client instance
+     * @param {string[]} args - Command arguments
+     */
+    execute(rl, client, args) {
+        if (args.length === 0) {
+            logWithTimestamp('[Hello] Hello World! :)');
+        } else {
+            logWithTimestamp(`[Hello] Hello ${args.join(' ')}! :)`);
+        }
     }
 };

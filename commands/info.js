@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, version: discordVersion } = require("discord.js");
+const fs = require('fs');
 const path = require('path')
 const { execSync } = require('child_process');
 
@@ -21,14 +22,23 @@ function formatUptime(uptime) {
     return str.trim();
 }
 
-function getGitCommit(dir = process.cwd()) {
-  try {
-    const commit = execSync(`git rev-parse --short HEAD`).toString().trim();
-    return commit;
-  } catch (err) {
-    warnWithTimestamp(err);
-    return 'unknown';
-  }
+function getGitCommit() {
+    try {
+        const gitDir = path.join(process.cwd(), '.git');
+        // Read the branch path pointed to by HEAD
+        const head = fs.readFileSync(path.join(gitDir, 'HEAD'), 'utf8').trim();
+        
+        if (head.startsWith('ref: ')) {
+            const refPath = head.slice(5);
+            // Read the latest commit ID of this branch
+            return fs.readFileSync(path.join(gitDir, refPath), 'utf8').trim().substring(0, 7);
+        } else {
+            // If it's a detached HEAD, then just commit the hash.
+            return head.substring(0, 7);
+        }
+    } catch (err) {
+        return 'unknown';
+    }
 }
 
 const commit = getGitCommit();

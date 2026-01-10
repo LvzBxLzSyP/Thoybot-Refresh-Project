@@ -1,4 +1,4 @@
-const { ActivityType } = require("discord.js");
+const { ActivityType, Events } = require("discord.js");
 const { DateTime } = require("luxon");
 
 /**
@@ -10,7 +10,7 @@ const { DateTime } = require("luxon");
  * @module events/ready
  */
 module.exports = {
-    name: "ready", // The name of the event, indicating when the bot is ready
+    name: Events.ClientReady, // The name of the event, indicating when the bot is ready
     once: true, // This event triggers only once when the bot is ready
     /**
      * Executes when the bot is ready, updating the bot's status based on the time zone.
