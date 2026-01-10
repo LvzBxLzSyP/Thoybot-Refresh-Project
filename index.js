@@ -856,6 +856,6 @@ function initReadline() {
     global.rl = rl;
 }
 /*"""
-print("Why are you using Python or sh to execute this?")
+print("Why are you using Python to execute this?")
 print("This is a fucking Node.js script")
 #*/
