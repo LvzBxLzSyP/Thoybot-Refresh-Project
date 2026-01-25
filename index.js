@@ -194,14 +194,14 @@ winston.addColors(customColors); // Register a custom color
 
 // Create Logger
 const createConsoleTransport = () => {
-    // 檢查是否會啟用 readline
+    // Check if readline is enabled.
     const willUseReadline = process.stdout.isTTY && 
                             process.stdin.isTTY && 
                             !process.env.PM2_HOME && 
                             !process.env.pm_id;
     
     if (willUseReadline) {
-        // 使用 Readline Transport
+        // Using Readline Transport
         return new ReadlineTransport({
             level: logLevel,
             format: winston.format.combine(
@@ -212,7 +212,7 @@ const createConsoleTransport = () => {
             )
         });
     } else {
-        // 使用標準 Console Transport
+        // Using standard Console Transport
         return new winston.transports.Console({
             level: logLevel,
             format: winston.format.combine(
