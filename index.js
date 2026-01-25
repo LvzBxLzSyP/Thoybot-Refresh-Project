@@ -64,16 +64,13 @@ const winston = safeRequire('winston');
 const DailyRotateFile = safeRequire('winston-daily-rotate-file');
 const utils = safeRequire('./utils/loadUtils.js');
 const {
-  getClockEmoji,
-  getRandomColor,
-  translate,
-  moduleLoader: {
-    loadCommands,
-    loadSubcommands,
-    loadButtons,
-    loadSelectMenus,
-    loadReadlineCommands
-  }
+    getClockEmoji,
+    getRandomColor,
+    translate,
+    moduleLoader: {
+        loadAllComponents
+    },
+    readlineTransport: ReadlineTransport
 } = utils;
 const { loadConsoleAdapter } = require('./console');
 
@@ -196,32 +193,56 @@ const fileFormat = winston.format.combine(
 winston.addColors(customColors); // Register a custom color
 
 // Create Logger
-const logger = winston.createLogger({
-    levels: customLevels,
-    level: logLevel, // Preset captures all levels
-    format: winston.format.combine(
-        winston.format((info) => {
-            info.timestamp = formatTimestamp();  // Add timestamp
-            return info;
-        })()
-    ),
-    transports: [
-        // Console output (color)
-        new winston.transports.Console({
-            level: logLevel,  // Console shows all levels
+const createConsoleTransport = () => {
+    // 檢查是否會啟用 readline
+    const willUseReadline = process.stdout.isTTY && 
+                            process.stdin.isTTY && 
+                            !process.env.PM2_HOME && 
+                            !process.env.pm_id;
+    
+    if (willUseReadline) {
+        // 使用 Readline Transport
+        return new ReadlineTransport({
+            level: logLevel,
+            format: winston.format.combine(
+                winston.format((info) => {
+                    info.timestamp = formatTimestamp();
+                    return info;
+                })()
+            )
+        });
+    } else {
+        // 使用標準 Console Transport
+        return new winston.transports.Console({
+            level: logLevel,
             format: winston.format.combine(
                 logFormat,
-                winston.format.timestamp()
+                winston.format((info) => {
+                    info.timestamp = formatTimestamp();
+                    return info;
+                })()
             ),
-            stderrLevels: [ 'error', 'fatal' ]
-        }),
+            stderrLevels: ['error', 'fatal']
+        });
+    }
+};
 
-        // Detailed logs of daily rotation (only info and higher level logs are recorded)
+const logger = winston.createLogger({
+    levels: customLevels,
+    level: logLevel,
+    transports: [
+        // Console/Readline output
+        createConsoleTransport(),
+
+        // Combined log
         new DailyRotateFile({
-            level: 'info',  // Only logs at info level and above are recorded
+            level: 'info',
             format: winston.format.combine(
                 fileFormat,
-                winston.format.timestamp()
+                winston.format((info) => {
+                    info.timestamp = formatTimestamp();
+                    return info;
+                })()
             ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'combined-%DATE%.log',
@@ -231,12 +252,15 @@ const logger = winston.createLogger({
             maxFiles: '14d'
         }),
 
-        // Error log (only error and higher level logs are recorded)
+        // Error log
         new DailyRotateFile({
-            level: 'error',  // Only logs with error level and above are recorded
+            level: 'error',
             format: winston.format.combine(
                 fileFormat,
-                winston.format.timestamp()
+                winston.format((info) => {
+                    info.timestamp = formatTimestamp();
+                    return info;
+                })()
             ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'error-%DATE%.log',
@@ -246,12 +270,15 @@ const logger = winston.createLogger({
             maxFiles: '14d'
         }),
 
-        // Fatal error log (only fatal level logs are recorded)
+        // Fatal log
         new DailyRotateFile({
-            level: 'fatal',  // Only log fatal level logs
+            level: 'fatal',
             format: winston.format.combine(
                 fileFormat,
-                winston.format.timestamp()
+                winston.format((info) => {
+                    info.timestamp = formatTimestamp();
+                    return info;
+                })()
             ),
             dirname: path.join(process.cwd(), 'logs'),
             filename: 'fatal-%DATE%.log',
@@ -349,34 +376,14 @@ client.selectMenus = new Collection();
 client.commandInfo = {}; // Used to store info for each command
 console.log('[Bootstrap] All variables are set successfully');
 
-console.log('[Bootstrap] Setting register command function');
-/**
- * Register slash command
- * @param commands - Commands arrays
- * @returns {Promise<void>}
- */
-const registerSlashCommands = async (commands) => {
-    const rest = new REST({ version: '10' }).setToken(config.token);
-
-    try {
-        logWithTimestamp('[Command] Started refreshing application (/) commands.');
-        await rest.put(Routes.applicationCommands(config.clientId), { body: commands });
-        logWithTimestamp('[Command] Successfully reloaded application (/) commands.');
-    } catch (error) {
-        errorWithTimestamp('[Command] Failed to register slash commands:', error);
-    }
-};
-console.log('[Bootstrap] Register command function set successfully');
-
 // Set other functions
 function shutdown(reason) {
     if (typeof reason === 'string') {
         reason = { type: 'exit', message: reason, exitCode: 0 };
     }
+    
     if (reason.type == 'exit') {
-        logWithTimestamp(
-            `[System] Shutting down by manual operation`
-        );
+        logWithTimestamp('[System] Shutting down by manual operation');
     } else {
         logger.log('fatal', `[System] Crashed from ${reason.source}`);
     }
@@ -390,11 +397,12 @@ function shutdown(reason) {
     } else {
         global.consoleAdapter?.crash?.();
     }
+    
     client?.destroy?.();
 
+    // 強制退出,不等待
     process.exit(reason.exitCode ?? 1);
 }
-
 global.shutdown = shutdown;
 /**
  * Logs current memory usage for debugging and monitoring.
@@ -461,10 +469,7 @@ function getEnvironmentInfo() {
 console.log(`[Bootstrap] Initializing bot event 'ready'`);
 client.once(Events.ClientReady, async () => {
     // Register slash command
-    const commands = loadCommands();
-    loadButtons();
-    loadSelectMenus();
-    await registerSlashCommands(commands);
+    const result = await loadAllComponents(client, __dirname);
     
     logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
     logWithTimestamp('[Bot] bot started successfully');

@@ -5,6 +5,8 @@
     "ping": "延遲",
     "pingserver": "伺服器延遲測試",
     "reload": "重新載入",
+    "reloadall": "重載全部",
+    "reloadcomp": "重載組件",
     "say": "傳送",
     "testerror": "錯誤邏輯測試",
     "testlanguage": "語言檢測測試",

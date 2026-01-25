@@ -1,48 +1,68 @@
 const readline = require('readline');
 const fs = require('fs');
 const path = require('path');
-const loadReadlineCommands = () => {
-    logWithTimestamp('[Readline] Starting load readline command');
+
+/**
+ * Load readline commands
+ * @private
+ */
+const loadReadlineCommands = (clearCache = false) => {
+    logWithTimestamp('[Readline] Starting load readline commands');
     
     const readlineCommands = {};
+    const commandsPath = path.join(__dirname, 'commands');
 
     try {
-        // Dynamically loading command modules
-        fs.readdirSync(path.join(__dirname, 'commands')).forEach(file => {
-            // Make sure to only load files ending with .js
-            if (file.endsWith('.js')) {
-                try {
-                    const command = require(path.join(__dirname, 'commands', file));
-                    if (command.name) {
-                        readlineCommands[command.name] = command;
-                        debugWithTimestamp(`[Readline] Loaded command ${command.name}`);
-                    } else {
-                        warnWithTimestamp(`[Readline] Command in ${file} does not have a 'name' property.`);
-                    }
-                } catch (err) {
-                    errorWithTimestamp(`[Readline] Error loading command from ${file}: ${err}`);
+        if (!fs.existsSync(commandsPath)) {
+            warnWithTimestamp('[Readline] Commands directory not found');
+            return readlineCommands;
+        }
+
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+        for (const file of commandFiles) {
+            try {
+                const filePath = path.join(commandsPath, file);
+                
+                if (clearCache) {
+                    delete require.cache[require.resolve(filePath)];
                 }
+                
+                const command = require(filePath);
+                
+                if (command.name && command.execute) {
+                    readlineCommands[command.name] = command;
+                    debugWithTimestamp(`[Readline] Loaded command: ${command.name}`);
+                } else {
+                    warnWithTimestamp(`[Readline] Command in ${file} does not have 'name' or 'execute' property.`);
+                }
+            } catch (err) {
+                errorWithTimestamp(`[Readline] Error loading command from ${file}: ${err}`);
             }
-        });
+        }
+        
+        logWithTimestamp(`[Readline] Loaded ${Object.keys(readlineCommands).length} commands`);
     } catch (err) {
-        errorWithTimestamp('[Readline] Error reading commands directory:', err);
+        errorWithTimestamp(`[Readline] Error reading commands directory: ${err}`);
     }
 
-    logWithTimestamp('[Readline] Loaded all commands');
     return readlineCommands;
 };
 
 let rl;
+let commands = {};
 
 module.exports = {
     start(client) {
+        logWithTimestamp('[Readline] Initializing readline interface');
+        
         rl = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
             prompt: '> '
         });
 
-        const commands = loadReadlineCommands();
+        commands = loadReadlineCommands();
 
         rl.on('line', (input) => {
             const trimmed = input.trim();
@@ -59,32 +79,87 @@ module.exports = {
                 try {
                     command.execute(rl, client, args);
                 } catch (err) {
-                    errorWithTimestamp(`[Readline] ${err}`);
+                    errorWithTimestamp(`[Readline] Error executing command '${cmdName}': ${err}`);
                 }
             } else {
                 errorWithTimestamp(`[Readline] Unknown command: ${cmdName}`);
+                console.log(`Available commands: ${Object.keys(commands).join(', ')}`);
             }
 
             rl.prompt();
         });
 
         rl.on('close', () => {
+            // Only triggers when not manually closed (e.g., Ctrl+D)
+            // If closed via stop()/crash(), this will not be executed.
+            logWithTimestamp('[Readline] Readline interface closed by user (Ctrl+D)');
             process.exit(0);
         });
 
         rl.prompt();
         global.rl = rl;
+        
+        logWithTimestamp('[Readline] Readline interface ready');
     },
-    crash() {
-        if (rl) {
-            logger.log('fatal', '[Console] Readline closed dues to a fatal error');
-            rl.close();
+
+    reload() {
+        if (!rl) {
+            warnWithTimestamp('[Readline] Cannot reload: readline not active');
+            return { success: false, count: 0 };
         }
+        
+        logWithTimestamp('[Readline] Reloading commands...');
+        commands = loadReadlineCommands(true);
+        const count = Object.keys(commands).length;
+        logWithTimestamp(`[Readline] Reloaded ${count} commands`);
+        
+        return { success: true, count };
     },
+
+    getCommands() {
+        return commands;
+    },
+
     stop() {
         if (rl) {
-            logWithTimestamp('[Console] Readline closed');
+            rl.removeAllListeners('close');
+            rl.pause();
+            
+            // Clear prompt
+            readline.clearLine(process.stdout, 0);
+            readline.cursorTo(process.stdout, 0);
+            
+            // First close readline
             rl.close();
+            
+            // Clear the reference immediately (this will prevent subsequent logs from displaying a prompt).
+            const wasActive = rl !== null;
+            global.rl = null;
+            rl = null;
+            
+            // It is now safe to log information.
+            if (wasActive) {
+                logWithTimestamp('[Console] Readline closed');
+            }
+        }
+    },
+    
+    crash() {
+        if (rl) {
+            rl.removeAllListeners('close');
+            rl.pause();
+            
+            readline.clearLine(process.stdout, 0);
+            readline.cursorTo(process.stdout, 0);
+            
+            rl.close();
+            const wasActive = rl !== null;
+            global.rl = null;
+            rl = null;
+            
+            if (wasActive) {
+                errorWithTimestamp('[Readline] Readline closed due to a fatal error');
+            }
         }
     }
 };
