@@ -8,7 +8,7 @@ module.exports = {
         if (!subcommand) {
             logWithTimestamp('Usage: reload <readline|bot>');
             logWithTimestamp('  readline - Reload readline commands only');
-            logWithTimestamp('  bot      - Reload bot components (requires loadUtils)');
+            logWithTimestamp('  bot      - Reload bot components (requires moduleLoader)');
             return;
         }
         
@@ -28,7 +28,7 @@ module.exports = {
                 case 'bot':
                 case 'all':
                     logWithTimestamp('Reloading bot components...');
-                    const { reloadAllComponents } = require('../../utils/loadUtils');
+                    const { reloadAllComponents } = require('../../utils/moduleLoader');
                     const botResult = await reloadAllComponents(client, __projname, {
                         registerCommands: false,
                         loadReadlineCommands: false // Do not reload the readline command
