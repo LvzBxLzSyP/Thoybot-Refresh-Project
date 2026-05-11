@@ -93,7 +93,7 @@ module.exports = {
             // Only triggers when not manually closed (e.g., Ctrl+D)
             // If closed via stop()/crash(), this will not be executed.
             logWithTimestamp('[Readline] Readline interface closed by user (Ctrl+D)');
-            process.exit(0);
+            process.exit();
         });
 
         rl.prompt();

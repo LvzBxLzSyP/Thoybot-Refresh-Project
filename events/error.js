@@ -45,7 +45,7 @@ module.exports = {
     execute(error, client) {
         errorWithTimestamp(`[Client] Discord Client Error: ${error}\nstack: ${error.stack}`);
         try {
-            sendErrorEmbed(client, 'Bot Error', error.message);
+            sendErrorEmbed(client, 'Bot Error', `${error.message}\nstack:${error.stack}`);
         } catch (err) {
             errorWithTimestamp('Error occurred while sending the error message:', err);
         }

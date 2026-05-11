@@ -1,6 +1,13 @@
 1 // 1,"""
-console.log('[Bootstrap] Starting bot');
 const appVer = '0.5.0';
+import { createRequire } from 'node:module';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+console.log('[Bootstrap] Starting bot');
 const __projname = __dirname;
 console.log(`[Bootstrap] Launching Thoybot v${appVer}`);
 
@@ -194,14 +201,20 @@ winston.addColors(customColors); // Register a custom color
 
 // Create Logger
 const createConsoleTransport = () => {
-    // Check if readline is enabled.
     const willUseReadline = process.stdout.isTTY && 
                             process.stdin.isTTY && 
                             !process.env.PM2_HOME && 
                             !process.env.pm_id;
     
-    if (willUseReadline) {
-        // Using Readline Transport
+    // 檢查是否使用 TUI 模式
+    if (config.TTYMode !== 'readline' && config.TTYMode !== 'disable') {
+        // TUI 模式：不使用任何 console transport
+        // TUI Transport 會在 console/tui/index.js 的 start() 中動態添加
+        return null;
+    }
+    
+    if (willUseReadline && config.TTYMode === 'readline') {
+        // 使用 Readline Transport
         return new ReadlineTransport({
             level: logLevel,
             format: winston.format.combine(
@@ -212,7 +225,7 @@ const createConsoleTransport = () => {
             )
         });
     } else {
-        // Using standard Console Transport
+        // 使用標準 Console Transport
         return new winston.transports.Console({
             level: logLevel,
             format: winston.format.combine(
@@ -227,12 +240,15 @@ const createConsoleTransport = () => {
     }
 };
 
+const consoleTransport = createConsoleTransport();
+
 const logger = winston.createLogger({
     levels: customLevels,
     level: logLevel,
     transports: [
-        // Console/Readline output
-        createConsoleTransport(),
+        // Console/Readline output (如果是 TUI 模式則為 null)
+        ...(consoleTransport ? [consoleTransport] : []),
+
 
         // Combined log
         new DailyRotateFile({
@@ -351,6 +367,7 @@ global.appVer = appVer;
 global.__projname = __projname;
 global.config = config;
 global.logger = logger;
+global.logLevel = logLevel;
 global.ITEMS_PER_PAGE = ITEMS_PER_PAGE;
 global.getRandomColor = getRandomColor;
 global.getClockEmoji = getClockEmoji;
@@ -368,6 +385,29 @@ global.dataWithTimestamp = dataWithTimestamp;
 global.helpWithTimestamp = helpWithTimestamp;
 global.fatalWithTimestamp = fatalWithTimestamp;
 console.log('[Bootstrap] Global variables set successfully');
+
+const loadEvents = () => {
+    const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
+    logWithTimestamp('[Event] Starting load events');
+
+    for (const file of eventFiles) {
+        try {
+            const event = require(`./events/${file}`);
+
+            if (event.once) {
+                client.once(event.name, (...args) => event.execute(...args, client));
+                debugWithTimestamp(`[Event] Loaded once event ${event.name}`);
+            } else {
+                client.on(event.name, (...args) => event.execute(...args, client));
+                debugWithTimestamp(`[Event] Loaded on event ${event.name}`);
+            }
+        } catch (error) {
+            errorWithTimestamp(`[Event] Failed to load event file ${file}: ${error}`);
+        }
+    }
+
+    logWithTimestamp('[Event] Finished loading all events');
+};
 
 console.log('[Bootstrap] Set variables');
 client.commands = new Collection();
@@ -466,7 +506,21 @@ function getEnvironmentInfo() {
 }
 
 // Initialize the bot
-console.log(`[Bootstrap] Initializing bot event 'ready'`);
+client.once(Events.ShardReady, () => {
+    const env = getEnvironmentInfo();
+    
+    if (env.shouldEnablePrompt) {
+        const consoleAdapter = loadConsoleAdapter(env);
+        global.consoleAdapter = consoleAdapter;
+        consoleAdapter.start(client);
+    } else {
+        logWithTimestamp('[System] Interactive prompt disabled (managed environment)');
+    }
+    debugWithTimestamp(`[System] Running under: ${env.manager}`);
+    if (env.shouldEnablePrompt) debugWithTimestamp('[System] Interactive prompt enabled');
+    loadEvents();
+})
+console.log(`[Bootstrap] Initializing bot event 'clientReady'`);
 client.once(Events.ClientReady, async () => {
     // Register slash command
     const result = await loadAllComponents(client, __dirname);
@@ -474,19 +528,6 @@ client.once(Events.ClientReady, async () => {
     logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
     logWithTimestamp('[Bot] bot started successfully');
     logMemoryUsage();
-    
-    const env = getEnvironmentInfo();
-    debugWithTimestamp(`[System] Running under: ${env.manager}`);
-    
-    if (env.shouldEnablePrompt) {
-        debugWithTimestamp('[System] Interactive prompt enabled');
-        
-        const consoleAdapter = loadConsoleAdapter(env);
-        global.consoleAdapter = consoleAdapter;
-        consoleAdapter.start(client);
-    } else {
-        logWithTimestamp('[System] Interactive prompt disabled (managed environment)');
-    }
 });
 console.log(`[Bootstrap] Initialized bot event 'ready'`);
 
@@ -559,7 +600,11 @@ client.on(Events.InteractionCreate,
             } catch (error) {
                 // Log and handle errors specific to button interactions
                 errorWithTimestamp(`[Button] An error occurred for button ID: ${interaction.customId}\n${error}`);
-                await interaction.reply({ content: 'An error occurred while processing your action.', flags: MessageFlags.Ephemeral });
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.editReply({ content: 'An error occurred while processing your action.', flags: MessageFlags.Ephemeral });
+                } else {
+                    await interaction.reply({ content: 'An error occurred while processing your action.', flags: MessageFlags.Ephemeral });
+                }
             }
         } else if (interaction.isStringSelectMenu()) {
             /**
@@ -595,31 +640,6 @@ console.log(`[Bootstrap] Initialized bot event 'interactionCreate'`);
 // Login bot
 console.log('[Bootstrap] Bootstrap End, logging bot');
 client.login(config.token);
-
-// Load event handler
-const loadEvents = () => {
-    const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
-    logWithTimestamp('[Event] Starting load events');
-
-    for (const file of eventFiles) {
-        try {
-            const event = require(`./events/${file}`);
-
-            if (event.once) {
-                client.once(event.name, (...args) => event.execute(...args, client));
-                debugWithTimestamp(`[Event] Loaded once event ${event.name}`);
-            } else {
-                client.on(event.name, (...args) => event.execute(...args, client));
-                debugWithTimestamp(`[Event] Loaded on event ${event.name}`);
-            }
-        } catch (error) {
-            errorWithTimestamp(`[Event] Failed to load event file ${file}: ${error}`);
-        }
-    }
-
-    logWithTimestamp('[Event] Finished loading all events');
-};
-loadEvents();
 /*"""
 print("Why are you using Python to execute this?")
 print("This is a fucking Node.js script")

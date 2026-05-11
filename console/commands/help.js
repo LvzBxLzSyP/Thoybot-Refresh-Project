@@ -5,7 +5,7 @@ module.exports = {
     execute(rl, client, args) {
         const commands = global.consoleAdapter.getCommands();
         
-        logWithTimestamp('\n📋 Available Readline Commands:');
+        logWithTimestamp('📋 Available Readline Commands:');
         logWithTimestamp('═'.repeat(50));
         
         Object.entries(commands).forEach(([name, cmd]) => {
@@ -14,6 +14,6 @@ module.exports = {
         });
         
         logWithTimestamp('═'.repeat(50));
-        logWithTimestamp(`Total: ${Object.keys(commands).length} commands\n`);
+        logWithTimestamp(`Total: ${Object.keys(commands).length} commands`);
     }
 };
