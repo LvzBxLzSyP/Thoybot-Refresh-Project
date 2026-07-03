@@ -18,6 +18,10 @@ const tzPerPages = 25;                          // Number of timezones shown per
 // verbose (8), input (9), silly (10)
 // Choose one based on the verbosity you want. Lower number = higher severity.
 const logLevel = 'debug';                        // Example: 'debug' (6)
+// TTY mode setting
+// Available values:
+// disable, prompt
+const TTYMode = 'prompt';
 
 module.exports = {
     token,
@@ -28,5 +32,6 @@ module.exports = {
     ngmcApiKey,
     timezone,
     tzPerPages,
-    logLevel
+    logLevel,
+    TTYMode
 };
