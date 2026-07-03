@@ -32,5 +32,16 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.6.0",
     "globals": "^17.7.0"
+  },
+  "overrides": {
+    "discord.js": {
+      "undici": "^6.27.0"
+    },
+    "@discordjs/rest": {
+      "undici": "^6.27.0"
+    },
+    "cheerio": {
+      "undici": "^7.28.0"
+    }
   }
 }
