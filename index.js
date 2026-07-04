@@ -77,7 +77,8 @@ const {
     moduleLoader: {
         loadAllComponents
     },
-    readlineTransport: ReadlineTransport
+    readlineTransport: ReadlineTransport,
+    pluginManager: pluginManager
 } = utils;
 const { loadConsoleAdapter } = require('./console');
 
@@ -523,8 +524,8 @@ client.once(Events.ShardReady, () => {
 console.log(`[Bootstrap] Initializing bot event 'clientReady'`);
 client.once(Events.ClientReady, async () => {
     // Register slash command
-    const result = await loadAllComponents(client, __dirname);
-    
+    const result = await loadAllComponents(client, __dirname, { registerCommands: false });
+    await pluginManager.loadAll(client);
     logWithTimestamp(`[Client] Logged in as ${client.user.tag}!`);
     logWithTimestamp('[Bot] bot started successfully');
     logMemoryUsage();
