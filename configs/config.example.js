@@ -24,8 +24,6 @@ module.exports = {
     clientId,
     errorChannelId,
     ownerId,
-    ngmcEnabled,
-    ngmcApiKey,
     timezone,
     tzPerPages,
     logLevel,
