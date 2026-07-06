@@ -125,5 +125,6 @@ function loadConsoleAdapter(env) {
     console.error('[Console] CRITICAL: No valid console adapter found!');
     console.error('[Console] Using disabled adapter as last resort\n');
     return require('./disabled');
+}
 
 module.exports = { loadConsoleAdapter };
